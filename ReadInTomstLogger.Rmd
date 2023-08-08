@@ -2069,12 +2069,7 @@ micro_data2 <- micro_data2 %>%
 micro_data3 <- microclimate2 %>%
   filter(cutting != "cut" & datetime > "2023-04-28" & datetime < "2023-06-20" & land_type == "DroughtNet" & loggerID != 95221050 & loggerID !=94195237) %>%
   mutate(daytime = floor_date(datetime, "day"),species=species ) %>%
-  group_by(loggerID, daytime,dayornight,species,drt_treatment,fire_class,plotID) %>%
-=======
-  filter(cutting != "cut" & datetime > "2023-04-28" & datetime < "2023-06-20" & land_type == "DroughtNet" & loggerID != 95221050) %>%
-  mutate(daytime = floor_date(datetime, "day") ) %>%
-  group_by(loggerID, daytime,species,drt_treatment,fire_class) %>%
->>>>>>> beffb79ee64e525a1a801e208a8ab7acf7906cdd
+  group_by(loggerID, daytime,dayornight,plotID,species,drt_treatment,fire_class) %>%
   summarise(
     air_temperature_mean = mean(value[sensor == "air_temperature"]),
     air_temperature_min = min(value[sensor == "air_temperature"]),
@@ -2098,7 +2093,7 @@ micro_data3 <- micro_data3 %>%
      mutate(below_zero_air = ifelse(air_temperature_min < 0.5, 1, 0)) %>%
      mutate(below_zero_ground = ifelse(ground_temperature_min < 0.5, 1, 0)) %>%
      mutate(below_zero_soil = ifelse(soil_temperature_min < 0.5, 1, 0)) %>%
-    mutate(species2 = ifelse(species == "Control", "Control", "Shrubs"))
+     mutate(species2 = ifelse(species == "Control", "Control", "Shrubs"))
     
 ```
 
@@ -2206,22 +2201,26 @@ micro_linear$individual <- with(micro_linear, interaction(species, plotID))
 
 ###air_temperature
 # Example of fixed effects comparisons, with same random effects structure
-model_1_air <- lmer(air_temperature_mean ~ site + (1|site/land_type/loggerID), data = micro_linear)
+
+##no variance within the loggerID selection
+model_1_air <- lmer(air_temperature_mean ~ site + (1|site/land_type), data = micro_linear)
 
 summary(model_1_air)
 #fixed
-model_2_air <- lmer(air_temperature_mean ~ site + land_type + (1|site/land_type/individual), data = micro_linear)
+model_2_air <- lmer(air_temperature_mean ~ land_type + (1|site/land_type), data = micro_linear)
 
 summary(model_2_air)
 
-model_3_air <- lmer(air_temperature_mean ~ site*land_type + (1|site/land_type/individual), data = micro_linear)
+model_3_air <- lmer(air_temperature_mean ~ site*land_type + (1|loggerID), data = micro_linear)
 
 summary(model_3_air)
 
-model_4_air <- lmer(air_temperature_mean ~ site*land_type*species + (1|site/land_type/individual), data = micro_linear)
+model_4_air <- lmer(air_temperature_mean ~ daytime + (1|loggerID), data = micro_linear)
 
 summary(model_4_air)
-anova(model_1_air, model_2_air, model_3_air, model_4_air)
+
+
+anova(model_1_air, model_2_air, model_3_air)
 #random
 model_5_air <- lmer(air_temperature_mean ~ site + (1|site/land_type/individual) + (1|species), data = micro_linear)
 summary(model_5_air)
@@ -2229,7 +2228,7 @@ anova(model_1_air, model_5_air)
 
 ###ground_temperature
 # Example of fixed effects comparisons, with same random effects structure
-model_1_ground <- lmer(ground_temperature_mean ~ site + (1|site/land_type/individual), data = micro_linear)
+model_1_ground <- lmer(ground_temperature_mean ~ site + (1|site/land_type), data = micro_linear)
 
 summary(model_1_ground)
 #fixed
@@ -2252,7 +2251,7 @@ anova(model_1_ground, model_5_ground)
 
 ###soil_temperature
 # Example of fixed effects comparisons, with same random effects structure
-model_1_soil <- lmer(soil_temperature_mean ~ site + (1|site/land_type/individual), data = micro_linear)
+model_1_soil <- lmer(soil_temperature_mean ~ site + (1|site/land_type), data = micro_linear)
 
 summary(model_1_soil)
 #fixed
@@ -2273,19 +2272,19 @@ model_5_soil <- lmer(soil_temperature_mean ~ site + (1|site/land_type/individual
 summary(model_5_soil)
 anova(model_1_soil, model_5_soil)
 
-###air_temperature
+###soil moisture
 # Example of fixed effects comparisons, with same random effects structure
-model_1_moist <- lmer(soil_moisture_mean ~ site + (1|site/land_type/individual), data = micro_linear)
+model_1_moist <- lmer(soil_moisture_mean ~ site + (1|site/land_type), data = micro_linear)
 
-summary(model_1_air)
+summary(model_1_moist)
 #fixed
 model_2_moist <- lmer(soil_moisture_mean ~ site + land_type + (1|site/land_type/individual), data = micro_linear)
 
-summary(model_2_air)
+summary(model_2_moist)
 
 model_3_moist <- lmer(soil_moisture_mean ~ site*land_type + (1|site/land_type/individual), data = micro_linear)
 
-summary(model_3_air)
+summary(model_3_moist)
 
 model_4_moist <- lmer(soil_moisture_mean ~ site*land_type*species + (1|site/land_type/individual), data = micro_linear)
 
@@ -2299,38 +2298,348 @@ anova(model_1_moist, model_5_moist)
 
 
 ```
+
+Droughtnet ones
+
 ```{r linear_lygra_dn}
-micro_linear2 <- micro_data3
+micro_linear2 <- micro_data2 %>%
+  mutate(drt_treatment = as.factor(drt_treatment))
+micro_linear3 <- micro_data3  %>%
+  mutate(drt_treatment = as.factor(drt_treatment))
 
-micro_linear2$individual <- with(micro_linear2, interaction(plotID, species))
-
-###air_temperature
+#### fire_class + drought_net
 # Example of fixed effects comparisons, with same random effects structure
-dn_model_1_air <- lmer(air_temperature_mean ~ drt_treatment + (1|plotID/loggerID), data = micro_linear2)
+
+dn_model_1_air <- lmer(air_temperature_mean ~ fire_class*drt_treatment + (1|loggerID), data = micro_linear2)
 summary(dn_model_1_air)
 
-dn_model_2_air <- lmer(air_temperature_mean ~ drt_treatment + (1|plotID/loggerID) + (1|fire_class), data = micro_linear2)
-summary(dn_model_2_air)
+dn_model_1_ground <- lmer(ground_temperature_mean ~ fire_class*drt_treatment + (1|loggerID), data = micro_linear2)
+summary(dn_model_1_ground)
 
-dn_model_3_air <- lmer(air_temperature_mean ~ drt_treatment + (1|plotID/loggerID) + (1|species), data = micro_linear2)
-summary(dn_model_3_air)
+dn_model_1_soil <- lmer(soil_temperature_mean ~ fire_class*drt_treatment + (1|loggerID), data = micro_linear2)
+summary(dn_model_1_soil)
 
-dn_model_4_air <- lmer(air_temperature_mean ~ dayornight + (1|plotID/loggerID), data = micro_linear2)
-summary(dn_model_4_air)
+dn_model_1_moist <- lmer(soil_moisture_mean ~ fire_class*drt_treatment + (1|loggerID), data = micro_linear2)
+summary(dn_model_1_moist)
 
-stargazer(dn_model_4_air, type = "text",
-          digits = 3,
-          star.cutoffs = c(0.05, 0.01, 0.001),
-          digit.separator = "")
 
-dn_model_5_air <- lmer(air_temperature_mean ~ species + (1|plotID/loggerID), data = micro_linear2)
-summary(dn_model_5_air)
+##### day or night
+dn_model_10_air <- lmer(air_temperature_mean ~ dayornight + (1|plotID), data = micro_linear3)
+summary(dn_model_10_air)
 
-dn_model_6_air <- lmer(air_temperature_mean ~ fire_class + (1|plotID/loggerID) + (1|species2), data = micro_linear2)
-summary(dn_model_6_air)
-#fixed
+dn_model_10_ground <- lmer(ground_temperature_mean ~ dayornight + (1|plotID), data = micro_linear3)
+summary(dn_model_10_ground)
+
+dn_model_10_soil <- lmer(soil_temperature_mean ~ dayornight + (1|plotID), data = micro_linear3)
+summary(dn_model_10_soil)
+
+dn_model_10_moist <- lmer(soil_moisture_mean ~ dayornight + (1|plotID), data = micro_linear3)
+summary(dn_model_10_moist)
+
+dn_model_11_air <- lmer(air_temperature_mean ~ dayornight*drt_treatment + (1|plotID), data = micro_linear3)
+summary(dn_model_11_air)
+
+dn_model_11_ground <- lmer(ground_temperature_mean ~ dayornight*drt_treatment + (1|plotID), data = micro_linear3)
+summary(dn_model_11_ground)
+
+dn_model_11_soil <- lmer(soil_temperature_mean ~ dayornight*drt_treatment + (1|plotID), data = micro_linear3)
+summary(dn_model_11_soil)
+
+dn_model_11_moist <- lmer(soil_moisture_mean ~ dayornight*drt_treatment + (1|plotID), data = micro_linear3)
+summary(dn_model_11_moist)
+
+```
+
+```{r test_plot_modelbased}
+# 2. Obtain estimated means
+means_air <- estimate_means(model_3_air)
+
+
+# 3. Plot
+ggplot(micro_linear, aes(x = land_type, y = air_temperature_mean)) +
+  facet_grid(~site)+
+  # Add base data
+  geom_violin(aes(fill = land_type), color = "white") +
+  geom_jitter2(width = 0.05, alpha = 0.5) +
+
+  # Add pointrange and line from means
+  geom_line(data = means_air, aes(y = Mean, group = 1), linewidth = 1) +
+  geom_pointrange(
+    data = means_air,
+    aes(y = Mean, ymin = CI_low, ymax = CI_high),
+    size = 1,
+    color = "white"
+  ) +
+  # Improve colors
+  scale_fill_material() +
+  theme_modern()
+```
+
+```{r plots_dn}
+# 2. Obtain estimated means
+dn_1_means_air <- estimate_means(dn_model_1_air, at = c("fire_class","drt_treatment"))
+dn_1_means_ground <- estimate_means(dn_model_1_ground, at = c("fire_class","drt_treatment"))
+dn_1_means_soil <- estimate_means(dn_model_1_soil, at = c("fire_class","drt_treatment"))
+dn_1_means_moist <- estimate_means(dn_model_1_moist, at = c("fire_class","drt_treatment"))
+
+
+###### PLOTS ONLY DAY AND NIGHT############
+plot <- ggplot(micro_linear2, aes(x = drt_treatment, y = air_temperature_mean)) +
+  facet_grid(~fire_class)+
+  # Add base data
+  geom_violin(aes(fill = drt_treatment), color = "white") +
+  geom_jitter2(width = 0.05, alpha = 0.5) +
+
+  # Add pointrange and line from means
+  geom_line(data = dn_1_means_air, aes(y = Mean, group = 1), linewidth = 1) +
+  geom_pointrange(
+    data = dn_1_means_air,
+    aes(y = Mean, ymin = CI_low, ymax = CI_high),
+    size = 1,
+    color = "white"
+  ) +
+  # Improve colors
+  scale_fill_material() +
+  theme_modern()
+ggsave(file.path("data/test_mixed", "air_dn_1.png"), plot, height = 40, width = 80, units = "cm")
+
+# 3. Plot
+plot <- ggplot(micro_linear2, aes(x = drt_treatment, y = ground_temperature_mean)) +
+  facet_grid(~fire_class)+
+  # Add base data
+  geom_violin(aes(fill = drt_treatment), color = "white") +
+  geom_jitter2(width = 0.05, alpha = 0.5) +
+
+  # Add pointrange and line from means
+  geom_line(data = dn_1_means_ground, aes(y = Mean, group = 1), linewidth = 1) +
+  geom_pointrange(
+    data = dn_1_means_ground,
+    aes(y = Mean, ymin = CI_low, ymax = CI_high),
+    size = 1,
+    color = "white"
+  ) +
+  # Improve colors
+  scale_fill_material() +
+  theme_modern()
+ggsave(file.path("data/test_mixed", "ground_dn_1.png"), plot, height = 40, width = 80, units = "cm")
+
+# 3. Plot
+plot <- ggplot(micro_linear2, aes(x = drt_treatment, y = soil_temperature_mean)) +
+  facet_grid(~fire_class)+
+  # Add base data
+  geom_violin(aes(fill = drt_treatment), color = "white") +
+  geom_jitter2(width = 0.05, alpha = 0.5) +
+
+  # Add pointrange and line from means
+  geom_line(data = dn_1_means_soil, aes(y = Mean, group = 1), linewidth = 1) +
+  geom_pointrange(
+    data = dn_1_means_soil,
+    aes(y = Mean, ymin = CI_low, ymax = CI_high),
+    size = 1,
+    color = "white"
+  ) +
+  # Improve colors
+  scale_fill_material() +
+  theme_modern()
+ggsave(file.path("data/test_mixed", "soil_dn_1.png"), plot, height = 40, width = 80, units = "cm")
+
+# 3. Plot
+plot <- ggplot(micro_linear2, aes(x = drt_treatment, y = soil_moisture_mean)) +
+  facet_grid(~fire_class)+
+  # Add base data
+  geom_violin(aes(fill = drt_treatment), color = "white") +
+  geom_jitter2(width = 0.05, alpha = 0.5) +
+
+  # Add pointrange and line from means
+  geom_line(data = dn_1_means_moist, aes(y = Mean, group = 1), linewidth = 1) +
+  geom_pointrange(
+    data = dn_1_means_moist,
+    aes(y = Mean, ymin = CI_low, ymax = CI_high),
+    size = 1,
+    color = "white"
+  ) +
+  # Improve colors
+  scale_fill_material() +
+  theme_modern()
+ggsave(file.path("data/test_mixed", "moist_dn_1.png"), plot, height = 40, width = 80, units = "cm")
 
 
 ```
 
+
+ 
+```{r dn_day_and_night}
+# 2. Obtain estimated means
+dn_10_means_air <- estimate_means(dn_model_10_air)
+dn_10_means_ground <- estimate_means(dn_model_10_ground)
+dn_10_means_soil <- estimate_means(dn_model_10_soil)
+dn_10_means_moist <- estimate_means(dn_model_10_moist)
+
+dn_11_means_air <- estimate_means(dn_model_11_air)
+dn_11_means_ground <- estimate_means(dn_model_11_ground)
+dn_11_means_soil <- estimate_means(dn_model_11_soil)
+dn_11_means_moist <- estimate_means(dn_model_11_moist)
+
+
+
+###############################
+#######only day & night########
+###############################
+plot <- ggplot(micro_linear3, aes(x = dayornight, y = air_temperature_mean)) +
+  # Add base data
+  geom_violin(aes(fill = dayornight), color = "white") +
+  geom_jitter2(width = 0.05, alpha = 0.5) +
+
+  # Add pointrange and line from means
+  geom_line(data = dn_10_means_air, aes(y = Mean, group = 1), linewidth = 1) +
+  geom_pointrange(
+    data = dn_10_means_air,
+    aes(y = Mean, ymin = CI_low, ymax = CI_high),
+    size = 1,
+    color = "white"
+  ) +
+  # Improve colors
+  scale_fill_manual(values = c("day" = "yellow", "night" = "#404040")) +
+  theme_modern()
+ggsave(file.path("data/test_mixed", "air_dn_10.png"), plot, height = 40, width = 80, units = "cm")
+
+# 3. Plot
+plot <- ggplot(micro_linear3, aes(x = dayornight, y = ground_temperature_mean)) +
+  # Add base data
+  geom_violin(aes(fill = dayornight), color = "white") +
+  geom_jitter2(width = 0.05, alpha = 0.5) +
+
+  # Add pointrange and line from means
+  geom_line(data = dn_10_means_ground, aes(y = Mean, group = 1), linewidth = 1) +
+  geom_pointrange(
+    data = dn_10_means_ground,
+    aes(y = Mean, ymin = CI_low, ymax = CI_high),
+    size = 1,
+    color = "white"
+  ) +
+  # Improve colors
+  scale_fill_manual(values = c("day" = "yellow", "night" = "#404040")) +
+  theme_modern()
+ggsave(file.path("data/test_mixed", "ground_dn_10.png"), plot, height = 40, width = 80, units = "cm")
+
+# 3. Plot
+plot <- ggplot(micro_linear3, aes(x = dayornight, y = soil_temperature_mean)) +
+  # Add base data
+  geom_violin(aes(fill = dayornight), color = "white") +
+  geom_jitter2(width = 0.05, alpha = 0.5) +
+
+  # Add pointrange and line from means
+  geom_line(data = dn_10_means_soil, aes(y = Mean, group = 1), linewidth = 1) +
+  geom_pointrange(
+    data = dn_10_means_soil,
+    aes(y = Mean, ymin = CI_low, ymax = CI_high),
+    size = 1,
+    color = "white"
+  ) +
+  # Improve colors
+  scale_fill_manual(values = c("day" = "yellow", "night" = "#404040")) +
+  theme_modern()
+ggsave(file.path("data/test_mixed", "soil_dn_10.png"), plot, height = 40, width = 80, units = "cm")
+
+# 3. Plot
+plot <- ggplot(micro_linear3, aes(x = dayornight, y = soil_moisture_mean)) +
+  # Add base data
+  geom_violin(aes(fill = dayornight), color = "white") +
+  geom_jitter2(width = 0.05, alpha = 0.5) +
+
+  # Add pointrange and line from means
+  geom_line(data = dn_10_means_moist, aes(y = Mean, group = 1), linewidth = 1) +
+  geom_pointrange(
+    data = dn_10_means_moist,
+    aes(y = Mean, ymin = CI_low, ymax = CI_high),
+    size = 1,
+    color = "white"
+  ) +
+  # Improve colors
+  scale_fill_manual(values = c("day" = "yellow", "night" = "#404040")) +
+  theme_modern()
+ggsave(file.path("data/test_mixed", "moist_dn_10.png"), plot, height = 40, width = 80, units = "cm")
+
+#############################################
+##DAY AND NIGHT ft. DRT TREAT ###############
+#########################################
+
+plot <- ggplot(micro_linear3, aes(x = dayornight, y = air_temperature_mean)) +
+  facet_wrap(~drt_treatment) +
+  # Add base data
+  geom_violin(aes(fill = dayornight), color = "white") +
+  geom_jitter2(width = 0.05, alpha = 0.5) +
+
+  # Add pointrange and line from means
+  geom_line(data = dn_11_means_air, aes(y = Mean, group = 1), linewidth = 1) +
+  geom_pointrange(
+    data = dn_11_means_air,
+    aes(y = Mean, ymin = CI_low, ymax = CI_high),
+    size = 1,
+    color = "white"
+  ) +
+  # Improve colors
+  scale_fill_manual(values = c("day" = "yellow", "night" = "#404040")) +
+  theme_modern()
+ggsave(file.path("data/test_mixed", "air_dn_11.png"), plot, height = 40, width = 80, units = "cm")
+
+# 3. Plot
+plot <- ggplot(micro_linear3, aes(x = dayornight, y = ground_temperature_mean)) +
+  facet_wrap(~drt_treatment) +
+  # Add base data
+  geom_violin(aes(fill = dayornight), color = "white") +
+  geom_jitter2(width = 0.05, alpha = 0.5) +
+
+  # Add pointrange and line from means
+  geom_line(data = dn_11_means_ground, aes(y = Mean, group = 1), linewidth = 1) +
+  geom_pointrange(
+    data = dn_11_means_ground,
+    aes(y = Mean, ymin = CI_low, ymax = CI_high),
+    size = 1,
+    color = "white"
+  ) +
+  # Improve colors
+  scale_fill_manual(values = c("day" = "yellow", "night" = "#404040")) +
+  theme_modern()
+ggsave(file.path("data/test_mixed", "ground_dn_11.png"), plot, height = 40, width = 80, units = "cm")
+
+# 3. Plot
+plot <- ggplot(micro_linear3, aes(x = dayornight, y = soil_temperature_mean)) +
+  facet_wrap(~drt_treatment) +
+  # Add base data
+  geom_violin(aes(fill = dayornight), color = "white") +
+  geom_jitter2(width = 0.05, alpha = 0.5) +
+
+  # Add pointrange and line from means
+  geom_line(data = dn_11_means_soil, aes(y = Mean, group = 1), linewidth = 1) +
+  geom_pointrange(
+    data = dn_11_means_soil,
+    aes(y = Mean, ymin = CI_low, ymax = CI_high),
+    size = 1,
+    color = "white"
+  ) +
+  # Improve colors
+  scale_fill_manual(values = c("day" = "yellow", "night" = "#404040")) +
+  theme_modern()
+ggsave(file.path("data/test_mixed", "soil_dn_11.png"), plot, height = 40, width = 80, units = "cm")
+
+# 3. Plot
+plot <- ggplot(micro_linear3, aes(x = dayornight, y = soil_moisture_mean)) +
+  # Add base data
+  geom_violin(aes(fill = dayornight), color = "white") +
+  geom_jitter2(width = 0.05, alpha = 0.5) +
+
+  # Add pointrange and line from means
+  geom_line(data = dn_11_means_moist, aes(y = Mean, group = 1), linewidth = 1) +
+  geom_pointrange(
+    data = dn_11_means_moist,
+    aes(y = Mean, ymin = CI_low, ymax = CI_high),
+    size = 1,
+    color = "white"
+  ) +
+  # Improve colors
+  scale_fill_manual(values = c("day" = "yellow", "night" = "#404040")) +
+  theme_modern()
+ggsave(file.path("data/test_mixed", "moist_dn_11.png"), plot, height = 40, width = 80, units = "cm")
+```
 

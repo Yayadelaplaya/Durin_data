@@ -36,6 +36,11 @@ library(readr)
 library(ggplot2)
 library(lme4)
 library(stargazer)
+library(emmeans)
+library(see)
+library(svglite)
+library(officer)
+
 source("soilmoisture_correction.R")
 ```
 
@@ -1886,7 +1891,7 @@ ggsave(file.path("data/plots/senja", file_name), plot, height = 40, width = 80, 
 micro_data <- microclimate %>%
   filter(cutting != "cut" & datetime > "2023-06-27" & datetime < "2023-07-19" & date_in < "2023-07-01" & land_type != "DroughtNet") %>%
   mutate(daytime = floor_date(datetime, "day") ) %>%
-  group_by(loggerID, daytime, site, land_type,species,plotID) %>%
+  group_by(loggerID, daytime, site,plotID,land_type,species) %>%
   summarise(
     air_temperature_mean = mean(value[sensor == "air_temperature"]),
     air_temperature_min = min(value[sensor == "air_temperature"]),
@@ -2033,10 +2038,9 @@ ggsave(file.path("data/plots", "By_site_species_soil_moisture.png"), graph_soil_
 
 
 micro_data2 <- microclimate2 %>%
-<<<<<<< HEAD
-  filter(cutting != "cut" & datetime > "2023-04-28" & datetime < "2023-06-20" & land_type == "DroughtNet" & loggerID != 95221050 & species != "Control") %>%
+  filter(cutting != "cut" & datetime > "2023-04-28" & datetime < "2023-06-20" & land_type == "DroughtNet" & loggerID != 95221050) %>%
   mutate(daytime = floor_date(datetime, "day")) %>%
-  group_by(loggerID,daytime,species,drt_treatment,fire_class,plotID) %>%
+  group_by(loggerID,daytime,plotID,species,drt_treatment,fire_class) %>%
   summarise(
     air_temperature_mean = mean(value[sensor == "air_temperature"]),
     air_temperature_min = min(value[sensor == "air_temperature"]),
@@ -2193,8 +2197,7 @@ ggsave(file.path("data/plots/testdayornight", "By_controlvsshrub_soil_moisture_f
 ```
 
 ```{r linear_model_tests_lyse}
-micro_linear <- micro_data %>%
-  filter(site != "Kautekaino")
+micro_linear <- micro_data 
 
 
 micro_linear$individual <- with(micro_linear, interaction(species, plotID))
@@ -2203,97 +2206,187 @@ micro_linear$individual <- with(micro_linear, interaction(species, plotID))
 # Example of fixed effects comparisons, with same random effects structure
 
 ##no variance within the loggerID selection
-model_1_air <- lmer(air_temperature_mean ~ site + (1|site/land_type), data = micro_linear)
+##
+model_1_air <- lmer(air_temperature_mean ~ site*land_type + (1|daytime), data = micro_linear)
+model_1a_air <- lmer(air_temperature_mean ~ site*land_type + (1|loggerID), data = micro_linear)
+model_1b_air <- lmer(air_temperature_mean ~ site*land_type + (1|plotID), data = micro_linear)
+model_1c_air <- lmer(air_temperature_mean ~ site*land_type + (1|species), data = micro_linear)
+model_1s_air <- lmer(air_temperature_mean ~ site*land_type + (1|daytime)+ (1|species), data = micro_linear)
+model_1as_air <- lmer(air_temperature_mean ~ site*land_type + (1|loggerID)+ (1|species), data = micro_linear)
+model_1bs_air <- lmer(air_temperature_mean ~ site*land_type + (1|plotID)+ (1|species), data = micro_linear)
+anova(model_1_air,model_1a_air,model_1as_air,model_1s_air,model_1b_air,model_1bs_air,model_1c_air)
+##
+##
+model_1_air <- lmer(air_temperature_mean ~ site*land_type + (1|daytime), data = micro_linear)
+model_1a_air <- lmer(air_temperature_max ~ site*land_type + (1|loggerID), data = micro_linear)
+model_1b_air <- lmer(air_temperature_max ~ site*land_type + (1|plotID), data = micro_linear)
+model_1c_air <- lmer(air_temperature_max ~ site*land_type + (1|species), data = micro_linear)
+model_1s_air <- lmer(air_temperature_max ~ site*land_type + (1|daytime)+ (1|species), data = micro_linear)
+model_1as_air <- lmer(air_temperature_max ~ site*land_type + (1|loggerID)+ (1|species), data = micro_linear)
+model_1bs_air <- lmer(air_temperature_max ~ site*land_type + (1|plotID)+ (1|species), data = micro_linear)
+anova(model_1_air,model_1a_air,model_1as_air,model_1s_air,model_1b_air,model_1bs_air,model_1c_air)
+##
+##
+model_1_air <- lmer(air_temperature_min ~ site*land_type + (1|daytime), data = micro_linear)
+model_1a_air <- lmer(air_temperature_min ~ site*land_type + (1|loggerID), data = micro_linear)
+model_1b_air <- lmer(air_temperature_min ~ site*land_type + (1|plotID), data = micro_linear)
+model_1c_air <- lmer(air_temperature_min ~ site*land_type + (1|species), data = micro_linear)
+model_1s_air <- lmer(air_temperature_min ~ site*land_type + (1|daytime)+ (1|species), data = micro_linear)
+model_1as_air <- lmer(air_temperature_min ~ site*land_type + (1|loggerID)+ (1|species), data = micro_linear)
+model_1bs_air <- lmer(air_temperature_min ~ site*land_type + (1|plotID)+ (1|species), data = micro_linear)
+anova(model_1_air,model_1a_air,model_1as_air,model_1s_air,model_1b_air,model_1bs_air,model_1c_air)
+##
+##
+model_1_air <- lmer(air_temperature_range ~ site*land_type + (1|daytime), data = micro_linear)
+model_1a_air <- lmer(air_temperature_range ~ site*land_type + (1|loggerID), data = micro_linear)
+model_1b_air <- lmer(air_temperature_range ~ site*land_type + (1|plotID), data = micro_linear)
+model_1c_air <- lmer(air_temperature_range ~ site*land_type + (1|species), data = micro_linear)
+model_1s_air <- lmer(air_temperature_range ~ site*land_type + (1|daytime)+ (1|species), data = micro_linear)
+model_1as_air <- lmer(air_temperature_range ~ site*land_type + (1|loggerID)+ (1|species), data = micro_linear)
+model_1bs_air <- lmer(air_temperature_range ~ site*land_type + (1|plotID)+ (1|species), data = micro_linear)
+anova(model_1_air,model_1a_air,model_1as_air,model_1s_air,model_1b_air,model_1bs_air,model_1c_air)
+##
 
-summary(model_1_air)
-#fixed
-model_2_air <- lmer(air_temperature_mean ~ land_type + (1|site/land_type), data = micro_linear)
-
-summary(model_2_air)
-
-model_3_air <- lmer(air_temperature_mean ~ site*land_type + (1|loggerID), data = micro_linear)
-
-summary(model_3_air)
-
-model_4_air <- lmer(air_temperature_mean ~ daytime + (1|loggerID), data = micro_linear)
-
-summary(model_4_air)
-
-
-anova(model_1_air, model_2_air, model_3_air)
-#random
-model_5_air <- lmer(air_temperature_mean ~ site + (1|site/land_type/individual) + (1|species), data = micro_linear)
-summary(model_5_air)
-anova(model_1_air, model_5_air)
 
 ###ground_temperature
 # Example of fixed effects comparisons, with same random effects structure
-model_1_ground <- lmer(ground_temperature_mean ~ site + (1|site/land_type), data = micro_linear)
 
-summary(model_1_ground)
-#fixed
-model_2_ground <- lmer(ground_temperature_mean ~ site + land_type + (1|site/land_type/individual), data = micro_linear)
+##
+model_1_ground <- lmer(ground_temperature_mean ~ site*land_type + (1|daytime), data = micro_linear)
+model_1a_ground <- lmer(ground_temperature_mean ~ site*land_type + (1|loggerID), data = micro_linear)
+model_1b_ground <- lmer(ground_temperature_mean ~ site*land_type + (1|plotID), data = micro_linear)
+model_1c_ground <- lmer(ground_temperature_mean ~ site*land_type + (1|species), data = micro_linear)
+model_1s_ground <- lmer(ground_temperature_mean ~ site*land_type + (1|daytime)+ (1|species), data = micro_linear)
+model_1as_ground <- lmer(ground_temperature_mean ~ site*land_type + (1|loggerID)+ (1|species), data = micro_linear)
+model_1bs_ground <- lmer(ground_temperature_mean ~ site*land_type + (1|plotID)+ (1|species), data = micro_linear)
+anova(model_1_ground,model_1s_ground,model_1a_ground,model_1as_ground,model_1b_ground,model_1bs_ground,model_1c_ground)
+##
+##
+model_1_ground <- lmer(ground_temperature_max ~ site*land_type + (1|daytime), data = micro_linear)
+model_1a_ground <- lmer(ground_temperature_max ~ site*land_type + (1|loggerID), data = micro_linear)
+model_1b_ground <- lmer(ground_temperature_max ~ site*land_type + (1|plotID), data = micro_linear)
+model_1c_ground <- lmer(ground_temperature_max ~ site*land_type + (1|species), data = micro_linear)
+model_1s_ground <- lmer(ground_temperature_max ~ site*land_type + (1|daytime)+ (1|species), data = micro_linear)
+model_1as_ground <- lmer(ground_temperature_max ~ site*land_type + (1|loggerID)+ (1|species), data = micro_linear)
+model_1bs_ground <- lmer(ground_temperature_max ~ site*land_type + (1|plotID)+ (1|species), data = micro_linear)
+anova(model_1_ground,model_1s_ground,model_1a_ground,model_1as_ground,model_1b_ground,model_1bs_ground,model_1c_ground)
+##
+##
+model_1_ground <- lmer(ground_temperature_min ~ site*land_type + (1|daytime), data = micro_linear)
+model_1a_ground <- lmer(ground_temperature_min ~ site*land_type + (1|loggerID), data = micro_linear)
+model_1b_ground <- lmer(ground_temperature_min ~ site*land_type + (1|plotID), data = micro_linear)
+model_1c_ground <- lmer(ground_temperature_min ~ site*land_type + (1|species), data = micro_linear)
+model_1s_ground <- lmer(ground_temperature_min ~ site*land_type + (1|daytime)+ (1|species), data = micro_linear)
+model_1as_ground <- lmer(ground_temperature_min ~ site*land_type + (1|loggerID)+ (1|species), data = micro_linear)
+model_1bs_ground <- lmer(ground_temperature_min ~ site*land_type + (1|plotID)+ (1|species), data = micro_linear)
+anova(model_1_ground,model_1s_ground,model_1a_ground,model_1as_ground,model_1b_ground,model_1bs_ground,model_1c_ground)
+##
+##
+model_1_ground <- lmer(ground_temperature_range ~ site*land_type + (1|daytime), data = micro_linear)
+model_1a_ground <- lmer(ground_temperature_range ~ site*land_type + (1|loggerID), data = micro_linear)
+model_1b_ground <- lmer(ground_temperature_range ~ site*land_type + (1|plotID), data = micro_linear)
+model_1c_ground <- lmer(ground_temperature_range ~ site*land_type + (1|species), data = micro_linear)
+model_1s_ground <- lmer(ground_temperature_range ~ site*land_type + (1|daytime)+ (1|species), data = micro_linear)
+model_1as_ground <- lmer(ground_temperature_range ~ site*land_type + (1|loggerID)+ (1|species), data = micro_linear)
+model_1bs_ground <- lmer(ground_temperature_range ~ site*land_type + (1|plotID)+ (1|species), data = micro_linear)
+anova(model_1_ground,model_1s_ground,model_1a_ground,model_1as_ground,model_1b_ground,model_1bs_ground,model_1c_ground)
+##
 
-summary(model_2_ground)
-
-model_3_ground <- lmer(ground_temperature_mean ~ site*land_type + (1|site/land_type/individual), data = micro_linear)
-
-summary(model_3_ground)
-
-model_4_ground <- lmer(ground_temperature_mean ~ site*land_type*species + (1|site/land_type/individual), data = micro_linear)
-
-summary(model_4_ground)
-anova(model_1_ground, model_2_ground, model_3_ground, model_4_ground)
-#random
-model_5_ground <- lmer(ground_temperature_mean ~ site + (1|site/land_type/individual) + (1|species), data = micro_linear)
-summary(model_5_ground)
-anova(model_1_ground, model_5_ground)
 
 ###soil_temperature
 # Example of fixed effects comparisons, with same random effects structure
-model_1_soil <- lmer(soil_temperature_mean ~ site + (1|site/land_type), data = micro_linear)
+##
+model_1_soil <- lmer(soil_temperature_mean ~ site*land_type + (1|daytime), data = micro_linear)
+model_1a_soil <- lmer(soil_temperature_mean ~ site*land_type + (1|loggerID), data = micro_linear)
+model_1b_soil <- lmer(soil_temperature_mean ~ site*land_type + (1|plotID), data = micro_linear)
+model_1c_soil <- lmer(soil_temperature_mean ~ site*land_type + (1|species), data = micro_linear)
+model_1s_soil <- lmer(soil_temperature_mean ~ site*land_type + (1|daytime)+ (1|species), data = micro_linear)
+model_1as_soil <- lmer(soil_temperature_mean ~ site*land_type + (1|loggerID)+ (1|species), data = micro_linear)
+model_1bs_soil <- lmer(soil_temperature_mean ~ site*land_type + (1|plotID)+ (1|species), data = micro_linear)
+anova(model_1_soil,model_1s_soil,model_1a_soil,model_1as_soil,model_1b_soil,model_1bs_soil,model_1c_soil)
+##
+##
+model_1_soil <- lmer(soil_temperature_max ~ site*land_type + (1|daytime), data = micro_linear)
+model_1a_soil <- lmer(soil_temperature_max ~ site*land_type + (1|loggerID), data = micro_linear)
+model_1b_soil <- lmer(soil_temperature_max ~ site*land_type + (1|plotID), data = micro_linear)
+model_1c_soil <- lmer(soil_temperature_max ~ site*land_type + (1|species), data = micro_linear)
+model_1s_soil <- lmer(soil_temperature_max ~ site*land_type + (1|daytime)+ (1|species), data = micro_linear)
+model_1as_soil <- lmer(soil_temperature_max ~ site*land_type + (1|loggerID)+ (1|species), data = micro_linear)
+model_1bs_soil <- lmer(soil_temperature_max ~ site*land_type + (1|plotID)+ (1|species), data = micro_linear)
+anova(model_1_soil,model_1s_soil,model_1a_soil,model_1as_soil,model_1b_soil,model_1bs_soil,model_1c_soil)
+##
+##
+model_1_soil <- lmer(soil_temperature_min ~ site*land_type + (1|daytime), data = micro_linear)
+model_1a_soil <- lmer(soil_temperature_min ~ site*land_type + (1|loggerID), data = micro_linear)
+model_1b_soil <- lmer(soil_temperature_min ~ site*land_type + (1|plotID), data = micro_linear)
+model_1c_soil <- lmer(soil_temperature_min ~ site*land_type + (1|species), data = micro_linear)
+model_1s_soil <- lmer(soil_temperature_min ~ site*land_type + (1|daytime)+ (1|species), data = micro_linear)
+model_1as_soil <- lmer(soil_temperature_min ~ site*land_type + (1|loggerID)+ (1|species), data = micro_linear)
+model_1bs_soil <- lmer(soil_temperature_min ~ site*land_type + (1|plotID)+ (1|species), data = micro_linear)
+anova(model_1_soil,model_1s_soil,model_1a_soil,model_1as_soil,model_1b_soil,model_1bs_soil,model_1c_soil)
+##
+##
+model_1_soil <- lmer(soil_temperature_range ~ site*land_type + (1|daytime), data = micro_linear)
+model_1a_soil <- lmer(soil_temperature_range ~ site*land_type + (1|loggerID), data = micro_linear)
+model_1b_soil <- lmer(soil_temperature_range ~ site*land_type + (1|plotID), data = micro_linear)
+model_1c_soil <- lmer(soil_temperature_range ~ site*land_type + (1|species), data = micro_linear)
+model_1s_soil <- lmer(soil_temperature_range ~ site*land_type + (1|daytime)+ (1|species), data = micro_linear)
+model_1as_soil <- lmer(soil_temperature_range ~ site*land_type + (1|loggerID)+ (1|species), data = micro_linear)
+model_1bs_soil <- lmer(soil_temperature_range ~ site*land_type + (1|plotID)+ (1|species), data = micro_linear)
+anova(model_1_soil,model_1s_soil,model_1a_soil,model_1as_soil,model_1b_soil,model_1bs_soil,model_1c_soil)
+##
 
-summary(model_1_soil)
-#fixed
-model_2_soil <- lmer(soil_temperature_mean ~ site + land_type + (1|site/land_type/individual), data = micro_linear)
 
-summary(model_2_soil)
 
-model_3_soil <- lmer(soil_temperature_mean ~ site*land_type + (1|site/land_type/individual), data = micro_linear)
-
-summary(model_3_soil)
-
-model_4_soil <- lmer(soil_temperature_mean ~ site*land_type*species + (1|site/land_type/individual), data = micro_linear)
-
-summary(model_4_soil)
-anova(model_1_soil, model_2_soil, model_3_soil, model_4_soil)
-#random
-model_5_soil <- lmer(soil_temperature_mean ~ site + (1|site/land_type/individual) + (1|species), data = micro_linear)
-summary(model_5_soil)
-anova(model_1_soil, model_5_soil)
 
 ###soil moisture
 # Example of fixed effects comparisons, with same random effects structure
-model_1_moist <- lmer(soil_moisture_mean ~ site + (1|site/land_type), data = micro_linear)
+##
+model_1_moist <- lmer(soil_moisture_mean ~ site*land_type + (1|daytime), data = micro_linear)
+model_1a_moist <- lmer(soil_moisture_mean ~ site*land_type + (1|loggerID), data = micro_linear)
+model_1b_moist <- lmer(soil_moisture_mean ~ site*land_type + (1|plotID), data = micro_linear)
+model_1c_moist <- lmer(soil_moisture_mean ~ site*land_type + (1|species), data = micro_linear)
+model_1s_moist <- lmer(soil_moisture_mean ~ site*land_type + (1|daytime)+ (1|species), data = micro_linear)
+model_1as_moist <- lmer(soil_moisture_mean ~ site*land_type + (1|loggerID)+ (1|species), data = micro_linear)
+model_1bs_moist <- lmer(soil_moisture_mean ~ site*land_type + (1|plotID)+ (1|species), data = micro_linear)
 
-summary(model_1_moist)
-#fixed
-model_2_moist <- lmer(soil_moisture_mean ~ site + land_type + (1|site/land_type/individual), data = micro_linear)
+anova(model_1_moist,model_1s_moist,model_1a_moist,model_1as_moist,model_1b_moist,model_1bs_moist,model_1c_moist)
+##
+##
+model_1_moist <- lmer(soil_moisture_max ~ site*land_type + (1|daytime), data = micro_linear)
+model_1a_moist <- lmer(soil_moisture_max ~ site*land_type + (1|loggerID), data = micro_linear)
+model_1b_moist <- lmer(soil_moisture_max ~ site*land_type + (1|plotID), data = micro_linear)
+model_1c_moist <- lmer(soil_moisture_max ~ site*land_type + (1|species), data = micro_linear)
+model_1s_moist <- lmer(soil_moisture_max ~ site*land_type + (1|daytime)+ (1|species), data = micro_linear)
+model_1as_moist <- lmer(soil_moisture_max ~ site*land_type + (1|loggerID)+ (1|species), data = micro_linear)
+model_1bs_moist <- lmer(soil_moisture_max ~ site*land_type + (1|plotID)+ (1|species), data = micro_linear)
 
-summary(model_2_moist)
+anova(model_1_moist,model_1s_moist,model_1a_moist,model_1as_moist,model_1b_moist,model_1bs_moist,model_1c_moist)
+##
+##
+model_1_moist <- lmer(soil_moisture_min ~ site*land_type + (1|daytime), data = micro_linear)
+model_1a_moist <- lmer(soil_moisture_min ~ site*land_type + (1|loggerID), data = micro_linear)
+model_1b_moist <- lmer(soil_moisture_min ~ site*land_type + (1|plotID), data = micro_linear)
+model_1c_moist <- lmer(soil_moisture_min ~ site*land_type + (1|species), data = micro_linear)
+model_1s_moist <- lmer(soil_moisture_min ~ site*land_type + (1|daytime)+ (1|species), data = micro_linear)
+model_1as_moist <- lmer(soil_moisture_min ~ site*land_type + (1|loggerID)+ (1|species), data = micro_linear)
+model_1bs_moist <- lmer(soil_moisture_min ~ site*land_type + (1|plotID)+ (1|species), data = micro_linear)
 
-model_3_moist <- lmer(soil_moisture_mean ~ site*land_type + (1|site/land_type/individual), data = micro_linear)
+anova(model_1_moist,model_1s_moist,model_1a_moist,model_1as_moist,model_1b_moist,model_1bs_moist,model_1c_moist)
+##
+##
+model_1_moist <- lmer(soil_moisture_range ~ site*land_type + (1|daytime), data = micro_linear)
+model_1a_moist <- lmer(soil_moisture_range ~ site*land_type + (1|loggerID), data = micro_linear)
+model_1b_moist <- lmer(soil_moisture_range ~ site*land_type + (1|plotID), data = micro_linear)
+model_1c_moist <- lmer(soil_moisture_range ~ site*land_type + (1|species), data = micro_linear)
+model_1s_moist <- lmer(soil_moisture_range ~ site*land_type + (1|daytime)+ (1|species), data = micro_linear)
+model_1as_moist <- lmer(soil_moisture_range ~ site*land_type + (1|loggerID)+ (1|species), data = micro_linear)
+model_1bs_moist <- lmer(soil_moisture_range ~ site*land_type + (1|plotID)+ (1|species), data = micro_linear)
 
-summary(model_3_moist)
+anova(model_1_moist,model_1s_moist,model_1a_moist,model_1as_moist,model_1b_moist,model_1bs_moist,model_1c_moist)
+##
 
-model_4_moist <- lmer(soil_moisture_mean ~ site*land_type*species + (1|site/land_type/individual), data = micro_linear)
 
-summary(model_4_moist)
-anova(model_1_moist, model_2_moist, model_3_moist, model_4_moist)
-#random
-model_5_moist <- lmer(soil_moisture_mean ~ site + (1|site/land_type/individual) + (1|species), data = micro_linear)
-summary(model_5_moist)
-anova(model_1_moist, model_5_moist)
 
 
 
@@ -2302,51 +2395,421 @@ anova(model_1_moist, model_5_moist)
 Droughtnet ones
 
 ```{r linear_lygra_dn}
+
+
 micro_linear2 <- micro_data2 %>%
+  filter(species !="Control") %>%
   mutate(drt_treatment = as.factor(drt_treatment))
+
 micro_linear3 <- micro_data3  %>%
+  filter(species != "Control") %>%
   mutate(drt_treatment = as.factor(drt_treatment))
+
 
 #### fire_class + drought_net
 # Example of fixed effects comparisons, with same random effects structure
+##
+  dn_model_1_air <- lmer(air_temperature_mean ~ fire_class*drt_treatment + (1|loggerID), data = micro_linear2)
+  
+  dn_model_1a_air <- lmer(air_temperature_mean ~ fire_class*drt_treatment + (1|daytime), data = micro_linear2)
+  
+  dn_model_1b_air <- lmer(air_temperature_mean ~ fire_class*drt_treatment + (1|plotID/loggerID), data = micro_linear2)
+  
+  dn_model_1c_air <- lmer(air_temperature_mean ~ fire_class*drt_treatment + (1|species), data = micro_linear2)
+  
+  dn_model_1s_air <- lmer(air_temperature_mean ~ fire_class*drt_treatment + (1|loggerID)+ (1|species), data = micro_linear2)
+  
+  dn_model_1as_air <- lmer(air_temperature_mean ~ fire_class*drt_treatment + (1|daytime) + (1|species), data = micro_linear2)
+  
+  dn_model_1bs_air <- lmer(air_temperature_mean ~ fire_class*drt_treatment + (1|plotID/loggerID) + (1|species), data = micro_linear2)
+    
+  anova(dn_model_1_air,dn_model_1a_air,dn_model_1b_air,dn_model_1c_air,dn_model_1as_air,dn_model_1bs_air,dn_model_1s_air)
 
-dn_model_1_air <- lmer(air_temperature_mean ~ fire_class*drt_treatment + (1|loggerID), data = micro_linear2)
-summary(dn_model_1_air)
+##
+  ##
+  dn_model_1_air <- lmer(air_temperature_max ~ fire_class*drt_treatment + (1|loggerID), data = micro_linear2)
+  
+  dn_model_1a_air <- lmer(air_temperature_max ~ fire_class*drt_treatment + (1|daytime), data = micro_linear2)
+  
+  dn_model_1b_air <- lmer(air_temperature_max ~ fire_class*drt_treatment + (1|plotID/loggerID), data = micro_linear2)
+  
+  dn_model_1c_air <- lmer(air_temperature_max ~ fire_class*drt_treatment + (1|species), data = micro_linear2)
+  
+  dn_model_1s_air <- lmer(air_temperature_max ~ fire_class*drt_treatment + (1|loggerID)+ (1|species), data = micro_linear2)
+  
+  dn_model_1as_air <- lmer(air_temperature_max ~ fire_class*drt_treatment + (1|daytime) + (1|species), data = micro_linear2)
+  
+  dn_model_1bs_air <- lmer(air_temperature_max ~ fire_class*drt_treatment + (1|plotID/loggerID) + (1|species), data = micro_linear2)
+    
+  anova(dn_model_1_air,dn_model_1a_air,dn_model_1b_air,dn_model_1c_air,dn_model_1as_air,dn_model_1bs_air,dn_model_1s_air)
 
+##
+  dn_model_1_air <- lmer(air_temperature_min ~ fire_class*drt_treatment + (1|loggerID), data = micro_linear2)
+  
+  dn_model_1a_air <- lmer(air_temperature_min ~ fire_class*drt_treatment + (1|daytime), data = micro_linear2)
+  
+  dn_model_1b_air <- lmer(air_temperature_min ~ fire_class*drt_treatment + (1|plotID/loggerID), data = micro_linear2)
+  
+  dn_model_1c_air <- lmer(air_temperature_min ~ fire_class*drt_treatment + (1|species), data = micro_linear2)
+  
+  dn_model_1s_air <- lmer(air_temperature_min ~ fire_class*drt_treatment + (1|loggerID)+ (1|species), data = micro_linear2)
+  
+  dn_model_1as_air <- lmer(air_temperature_min ~ fire_class*drt_treatment + (1|daytime) + (1|species), data = micro_linear2)
+  
+  dn_model_1bs_air <- lmer(air_temperature_min ~ fire_class*drt_treatment + (1|plotID/loggerID) + (1|species), data = micro_linear2)
+    
+  anova(dn_model_1_air,dn_model_1a_air,dn_model_1b_air,dn_model_1c_air,dn_model_1as_air,dn_model_1bs_air,dn_model_1s_air)
+
+
+##
+dn_model_1_air <- lmer(air_temperature_range ~ fire_class*drt_treatment + (1|loggerID), data = micro_linear2)
+  
+  dn_model_1a_air <- lmer(air_temperature_range ~ fire_class*drt_treatment + (1|daytime), data = micro_linear2)
+  
+  dn_model_1b_air <- lmer(air_temperature_range ~ fire_class*drt_treatment + (1|plotID/loggerID), data = micro_linear2)
+  
+  dn_model_1c_air <- lmer(air_temperature_range ~ fire_class*drt_treatment + (1|species), data = micro_linear2)
+  
+  dn_model_1s_air <- lmer(air_temperature_range ~ fire_class*drt_treatment + (1|loggerID)+ (1|species), data = micro_linear2)
+  
+  dn_model_1as_air <- lmer(air_temperature_range ~ fire_class*drt_treatment + (1|daytime) + (1|species), data = micro_linear2)
+  
+  dn_model_1bs_air <- lmer(air_temperature_range ~ fire_class*drt_treatment + (1|plotID/loggerID) + (1|species), data = micro_linear2)
+    
+  anova(dn_model_1_air,dn_model_1a_air,dn_model_1b_air,dn_model_1c_air,dn_model_1as_air,dn_model_1bs_air,dn_model_1s_air)
+  
+  
+metrics <- c("ground_temperature_mean", "ground_temperature_max",
+             "ground_temperature_min", "ground_temperature_range")
+
+########
 dn_model_1_ground <- lmer(ground_temperature_mean ~ fire_class*drt_treatment + (1|loggerID), data = micro_linear2)
-summary(dn_model_1_ground)
 
+dn_model_1a_ground <- lmer(ground_temperature_mean ~ fire_class*drt_treatment + (1|daytime), data = micro_linear2)
+
+
+dn_model_1b_ground <- lmer(ground_temperature_mean ~ fire_class*drt_treatment + (1|plotID/loggerID), data = micro_linear2)
+
+
+dn_model_1c_ground <- lmer(ground_temperature_mean ~ fire_class*drt_treatment + (1|species), data = micro_linear2)
+
+dn_model_1s_ground <- lmer(ground_temperature_mean ~ fire_class*drt_treatment + (1|loggerID)+ (1|species), data = micro_linear2)
+
+
+dn_model_1as_ground <- lmer(ground_temperature_mean ~ fire_class*drt_treatment + (1|daytime) + (1|species), data = micro_linear2)
+
+
+dn_model_1bs_ground <- lmer(ground_temperature_mean ~ fire_class*drt_treatment + (1|plotID/loggerID) + (1|species), data = micro_linear2)
+                              
+anova(dn_model_1_ground,dn_model_1s_ground,dn_model_1a_ground,dn_model_1as_ground,dn_model_1b_ground,dn_model_1bs_ground,dn_model_1c_ground)
+
+##
+########
+dn_model_1_ground <- lmer(ground_temperature_max ~ fire_class*drt_treatment + (1|loggerID), data = micro_linear2)
+
+dn_model_1a_ground <- lmer(ground_temperature_max ~ fire_class*drt_treatment + (1|daytime), data = micro_linear2)
+
+
+dn_model_1b_ground <- lmer(ground_temperature_max ~ fire_class*drt_treatment + (1|plotID/loggerID), data = micro_linear2)
+
+
+dn_model_1c_ground <- lmer(ground_temperature_max ~ fire_class*drt_treatment + (1|species), data = micro_linear2)
+
+dn_model_1s_ground <- lmer(ground_temperature_max ~ fire_class*drt_treatment + (1|loggerID)+ (1|species), data = micro_linear2)
+
+
+dn_model_1as_ground <- lmer(ground_temperature_max ~ fire_class*drt_treatment + (1|daytime) + (1|species), data = micro_linear2)
+
+
+dn_model_1bs_ground <- lmer(ground_temperature_max ~ fire_class*drt_treatment + (1|plotID/loggerID) + (1|species), data = micro_linear2)
+                              
+anova(dn_model_1_ground,dn_model_1s_ground,dn_model_1a_ground,dn_model_1as_ground,dn_model_1b_ground,dn_model_1bs_ground,dn_model_1c_ground)
+
+##
+########
+dn_model_1_ground <- lmer(ground_temperature_min ~ fire_class*drt_treatment + (1|loggerID), data = micro_linear2)
+
+dn_model_1a_ground <- lmer(ground_temperature_min ~ fire_class*drt_treatment + (1|daytime), data = micro_linear2)
+
+
+dn_model_1b_ground <- lmer(ground_temperature_min ~ fire_class*drt_treatment + (1|plotID/loggerID), data = micro_linear2)
+
+
+dn_model_1c_ground <- lmer(ground_temperature_min ~ fire_class*drt_treatment + (1|species), data = micro_linear2)
+
+dn_model_1s_ground <- lmer(ground_temperature_min ~ fire_class*drt_treatment + (1|loggerID)+ (1|species), data = micro_linear2)
+
+
+dn_model_1as_ground <- lmer(ground_temperature_min ~ fire_class*drt_treatment + (1|daytime) + (1|species), data = micro_linear2)
+
+
+dn_model_1bs_ground <- lmer(ground_temperature_min ~ fire_class*drt_treatment + (1|plotID/loggerID) + (1|species), data = micro_linear2)
+                              
+anova(dn_model_1_ground,dn_model_1s_ground,dn_model_1a_ground,dn_model_1as_ground,dn_model_1b_ground,dn_model_1bs_ground,dn_model_1c_ground)
+
+##
+########
+dn_model_1_ground <- lmer(ground_temperature_range ~ fire_class*drt_treatment + (1|loggerID), data = micro_linear2)
+
+dn_model_1a_ground <- lmer(ground_temperature_range ~ fire_class*drt_treatment + (1|daytime), data = micro_linear2)
+
+
+dn_model_1b_ground <- lmer(ground_temperature_range ~ fire_class*drt_treatment + (1|plotID/loggerID), data = micro_linear2)
+
+
+dn_model_1c_ground <- lmer(ground_temperature_range ~ fire_class*drt_treatment + (1|species), data = micro_linear2)
+
+dn_model_1s_ground <- lmer(ground_temperature_range ~ fire_class*drt_treatment + (1|loggerID)+ (1|species), data = micro_linear2)
+
+
+dn_model_1as_ground <- lmer(ground_temperature_range ~ fire_class*drt_treatment + (1|daytime) + (1|species), data = micro_linear2)
+
+
+dn_model_1bs_ground <- lmer(ground_temperature_range ~ fire_class*drt_treatment + (1|plotID/loggerID) + (1|species), data = micro_linear2)
+                              
+anova(dn_model_1_ground,dn_model_1s_ground,dn_model_1a_ground,dn_model_1as_ground,dn_model_1b_ground,dn_model_1bs_ground,dn_model_1c_ground)
+
+##
+
+
+
+
+
+
+###
+
+metrics <- c("soil_temperature_mean", "soil_temperature_max",
+             "soil_temperature_min", "soil_temperature_range")
+
+
+
+##  
 dn_model_1_soil <- lmer(soil_temperature_mean ~ fire_class*drt_treatment + (1|loggerID), data = micro_linear2)
-summary(dn_model_1_soil)
 
+dn_model_1a_soil <- lmer(soil_temperature_mean ~ fire_class*drt_treatment + (1|daytime), data = micro_linear2)
+
+
+dn_model_1b_soil <- lmer(soil_temperature_mean ~ fire_class*drt_treatment + (1|plotID/loggerID), data = micro_linear2)
+
+
+dn_model_1c_soil <- lmer(soil_temperature_mean ~ fire_class*drt_treatment + (1|species), data = micro_linear2)
+
+dn_model_1s_soil <- lmer(soil_temperature_mean ~ fire_class*drt_treatment + (1|loggerID)+ (1|species), data = micro_linear2)
+
+
+dn_model_1as_soil <- lmer(soil_temperature_mean ~ fire_class*drt_treatment + (1|daytime) + (1|species), data = micro_linear2)
+
+
+dn_model_1bs_soil <- lmer(soil_temperature_mean ~ fire_class*drt_treatment + (1|plotID/loggerID) + (1|species), data = micro_linear2)
+                              
+anova(dn_model_1_soil,dn_model_1s_soil,dn_model_1a_soil,dn_model_1as_soil,dn_model_1b_soil,dn_model_1bs_soil,dn_model_1c_soil)
+
+##
+##  
+dn_model_1_soil <- lmer(soil_temperature_max ~ fire_class*drt_treatment + (1|loggerID), data = micro_linear2)
+
+dn_model_1a_soil <- lmer(soil_temperature_max ~ fire_class*drt_treatment + (1|daytime), data = micro_linear2)
+
+
+dn_model_1b_soil <- lmer(soil_temperature_max ~ fire_class*drt_treatment + (1|plotID/loggerID), data = micro_linear2)
+
+
+dn_model_1c_soil <- lmer(soil_temperature_max ~ fire_class*drt_treatment + (1|species), data = micro_linear2)
+
+dn_model_1s_soil <- lmer(soil_temperature_max ~ fire_class*drt_treatment + (1|loggerID)+ (1|species), data = micro_linear2)
+
+
+dn_model_1as_soil <- lmer(soil_temperature_max ~ fire_class*drt_treatment + (1|daytime) + (1|species), data = micro_linear2)
+
+
+dn_model_1bs_soil <- lmer(soil_temperature_max ~ fire_class*drt_treatment + (1|plotID/loggerID) + (1|species), data = micro_linear2)
+                              
+anova(dn_model_1_soil,dn_model_1s_soil,dn_model_1a_soil,dn_model_1as_soil,dn_model_1b_soil,dn_model_1bs_soil,dn_model_1c_soil)
+
+##
+##  
+dn_model_1_soil <- lmer(soil_temperature_min ~ fire_class*drt_treatment + (1|loggerID), data = micro_linear2)
+
+dn_model_1a_soil <- lmer(soil_temperature_min ~ fire_class*drt_treatment + (1|daytime), data = micro_linear2)
+
+
+dn_model_1b_soil <- lmer(soil_temperature_min ~ fire_class*drt_treatment + (1|plotID/loggerID), data = micro_linear2)
+
+
+dn_model_1c_soil <- lmer(soil_temperature_min ~ fire_class*drt_treatment + (1|species), data = micro_linear2)
+
+dn_model_1s_soil <- lmer(soil_temperature_min ~ fire_class*drt_treatment + (1|loggerID)+ (1|species), data = micro_linear2)
+
+
+dn_model_1as_soil <- lmer(soil_temperature_min ~ fire_class*drt_treatment + (1|daytime) + (1|species), data = micro_linear2)
+
+
+dn_model_1bs_soil <- lmer(soil_temperature_min ~ fire_class*drt_treatment + (1|plotID/loggerID) + (1|species), data = micro_linear2)
+                              
+anova(dn_model_1_soil,dn_model_1s_soil,dn_model_1a_soil,dn_model_1as_soil,dn_model_1b_soil,dn_model_1bs_soil,dn_model_1c_soil)
+
+##
+##  
+dn_model_1_soil <- lmer(soil_temperature_range ~ fire_class*drt_treatment + (1|loggerID), data = micro_linear2)
+
+dn_model_1a_soil <- lmer(soil_temperature_range ~ fire_class*drt_treatment + (1|daytime), data = micro_linear2)
+
+
+dn_model_1b_soil <- lmer(soil_temperature_range ~ fire_class*drt_treatment + (1|plotID/loggerID), data = micro_linear2)
+
+
+dn_model_1c_soil <- lmer(soil_temperature_range ~ fire_class*drt_treatment + (1|species), data = micro_linear2)
+
+dn_model_1s_soil <- lmer(soil_temperature_range ~ fire_class*drt_treatment + (1|loggerID)+ (1|species), data = micro_linear2)
+
+
+dn_model_1as_soil <- lmer(soil_temperature_range ~ fire_class*drt_treatment + (1|daytime) + (1|species), data = micro_linear2)
+
+
+dn_model_1bs_soil <- lmer(soil_temperature_range ~ fire_class*drt_treatment + (1|plotID/loggerID) + (1|species), data = micro_linear2)
+                              
+anova(dn_model_1_soil,dn_model_1s_soil,dn_model_1a_soil,dn_model_1as_soil,dn_model_1b_soil,dn_model_1bs_soil,dn_model_1c_soil)
+
+##
+
+
+
+
+#############################################################################################
+
+metrics <- c("soil_moisture_mean", "soil_moisture_max",
+             "soil_moisture_min", "soil_moisture_range")
+
+
+###  
 dn_model_1_moist <- lmer(soil_moisture_mean ~ fire_class*drt_treatment + (1|loggerID), data = micro_linear2)
-summary(dn_model_1_moist)
+
+dn_model_1a_moist <- lmer(soil_moisture_mean ~ fire_class*drt_treatment + (1|daytime), data = micro_linear2)
 
 
-##### day or night
-dn_model_10_air <- lmer(air_temperature_mean ~ dayornight + (1|plotID), data = micro_linear3)
-summary(dn_model_10_air)
+dn_model_1b_moist <- lmer(soil_moisture_mean ~ fire_class*drt_treatment + (1|plotID/loggerID), data = micro_linear2)
 
-dn_model_10_ground <- lmer(ground_temperature_mean ~ dayornight + (1|plotID), data = micro_linear3)
-summary(dn_model_10_ground)
 
-dn_model_10_soil <- lmer(soil_temperature_mean ~ dayornight + (1|plotID), data = micro_linear3)
-summary(dn_model_10_soil)
+dn_model_1c_moist <- lmer(soil_moisture_mean ~ fire_class*drt_treatment + (1|species), data = micro_linear2)
 
-dn_model_10_moist <- lmer(soil_moisture_mean ~ dayornight + (1|plotID), data = micro_linear3)
-summary(dn_model_10_moist)
+dn_model_1s_moist <- lmer(soil_moisture_mean ~ fire_class*drt_treatment + (1|loggerID)+ (1|species), data = micro_linear2)
 
-dn_model_11_air <- lmer(air_temperature_mean ~ dayornight*drt_treatment + (1|plotID), data = micro_linear3)
-summary(dn_model_11_air)
 
-dn_model_11_ground <- lmer(ground_temperature_mean ~ dayornight*drt_treatment + (1|plotID), data = micro_linear3)
-summary(dn_model_11_ground)
+dn_model_1as_moist <- lmer(soil_moisture_mean ~ fire_class*drt_treatment + (1|daytime) + (1|species), data = micro_linear2)
 
-dn_model_11_soil <- lmer(soil_temperature_mean ~ dayornight*drt_treatment + (1|plotID), data = micro_linear3)
-summary(dn_model_11_soil)
 
-dn_model_11_moist <- lmer(soil_moisture_mean ~ dayornight*drt_treatment + (1|plotID), data = micro_linear3)
-summary(dn_model_11_moist)
+dn_model_1bs_moist <- lmer(soil_moisture_mean ~ fire_class*drt_treatment + (1|plotID/loggerID) + (1|species), data = micro_linear2)
+                              
+anova(dn_model_1_moist,dn_model_1s_moist,dn_model_1a_moist,dn_model_1as_moist,dn_model_1b_moist,dn_model_1bs_moist,dn_model_1c_moist)
+###
+###  
+dn_model_1_moist <- lmer(soil_moisture_max ~ fire_class*drt_treatment + (1|loggerID), data = micro_linear2)
+
+dn_model_1a_moist <- lmer(soil_moisture_max ~ fire_class*drt_treatment + (1|daytime), data = micro_linear2)
+
+
+dn_model_1b_moist <- lmer(soil_moisture_max ~ fire_class*drt_treatment + (1|plotID/loggerID), data = micro_linear2)
+
+
+dn_model_1c_moist <- lmer(soil_moisture_max ~ fire_class*drt_treatment + (1|species), data = micro_linear2)
+
+dn_model_1s_moist <- lmer(soil_moisture_max ~ fire_class*drt_treatment + (1|loggerID)+ (1|species), data = micro_linear2)
+
+
+dn_model_1as_moist <- lmer(soil_moisture_max ~ fire_class*drt_treatment + (1|daytime) + (1|species), data = micro_linear2)
+
+
+dn_model_1bs_moist <- lmer(soil_moisture_max ~ fire_class*drt_treatment + (1|plotID/loggerID) + (1|species), data =micro_linear2) 
+                              
+anova(dn_model_1_moist,dn_model_1s_moist,dn_model_1a_moist,dn_model_1as_moist,dn_model_1b_moist,dn_model_1bs_moist,dn_model_1c_moist)
+###
+###  
+dn_model_1_moist <- lmer(soil_moisture_min ~ fire_class*drt_treatment + (1|loggerID), data = micro_linear2)
+
+dn_model_1a_moist <- lmer(soil_moisture_min ~ fire_class*drt_treatment + (1|daytime), data = micro_linear2)
+
+
+dn_model_1b_moist <- lmer(soil_moisture_min ~ fire_class*drt_treatment + (1|plotID/loggerID), data = micro_linear2)
+
+
+dn_model_1c_moist <- lmer(soil_moisture_min ~ fire_class*drt_treatment + (1|species), data = micro_linear2)
+
+dn_model_1s_moist <- lmer(soil_moisture_min ~ fire_class*drt_treatment + (1|loggerID)+ (1|species), data = micro_linear2)
+
+
+dn_model_1as_moist <- lmer(soil_moisture_min ~ fire_class*drt_treatment + (1|daytime) + (1|species), data = micro_linear2)
+
+
+dn_model_1bs_moist <- lmer(soil_moisture_min ~ fire_class*drt_treatment + (1|plotID/loggerID) + (1|species), data =micro_linear2) 
+                              
+anova(dn_model_1_moist,dn_model_1s_moist,dn_model_1a_moist,dn_model_1as_moist,dn_model_1b_moist,dn_model_1bs_moist,dn_model_1c_moist)
+###
+###  
+dn_model_1_moist <- lmer(soil_moisture_range ~ fire_class*drt_treatment + (1|loggerID), data = micro_linear2)
+
+dn_model_1a_moist <- lmer(soil_moisture_range ~ fire_class*drt_treatment + (1|daytime), data = micro_linear2)
+
+
+dn_model_1b_moist <- lmer(soil_moisture_range ~ fire_class*drt_treatment + (1|plotID/loggerID), data = micro_linear2)
+
+
+dn_model_1c_moist <- lmer(soil_moisture_range ~ fire_class*drt_treatment + (1|species), data = micro_linear2)
+
+dn_model_1s_moist <- lmer(soil_moisture_range ~ fire_class*drt_treatment + (1|loggerID)+ (1|species), data = micro_linear2)
+
+
+dn_model_1as_moist <- lmer(soil_moisture_range ~ fire_class*drt_treatment + (1|daytime) + (1|species), data = micro_linear2)
+
+
+dn_model_1bs_moist <- lmer(soil_moisture_range ~ fire_class*drt_treatment + (1|plotID/loggerID) + (1|species), data = micro_linear2)
+                              
+anova(dn_model_1_moist,dn_model_1s_moist,dn_model_1a_moist,dn_model_1as_moist,dn_model_1b_moist,dn_model_1bs_moist,dn_model_1c_moist)
+###
+
+
+
+
+
+# #########################################
+# ##### day or night
+# micro_linear3 <- micro_linear3 %>%
+#   filter(species!="Control")
+# day_model_1_air <- lmer(air_temperature_mean ~ drt_treatment*dayornight + (1|daytime), data = micro_linear3)
+# day_model_1a_air <- lmer(air_temperature_mean ~ drt_treatment*dayornight + (1|fire_class), data = micro_linear3)
+# day_model_1b_air <- lmer(air_temperature_mean ~ drt_treatment*dayornight + (1|loggerID), data = micro_linear3)
+# day_model_1c_air <- lmer(air_temperature_mean ~ fire_class*dayornight + (1|daytime), data = micro_linear3)
+# day_model_1d_air <- lmer(air_temperature_mean ~ drt_treatment*dayornight + (1|daytime) + (1|fire_class), data = micro_linear3)
+# day_model_1e_air <- lmer(air_temperature_mean ~ drt_treatment*dayornight*fire_class + (1|daytime), data = micro_linear3)
+# 
+# anova(day_model_1_air,day_model_1a_air,day_model_1b_air,day_model_1c_air,day_model_1d_air,day_model_1e_air)
+# 
+# day_model_1_ground <- lmer(ground_temperature_mean ~ drt_treatment*dayornight + (1|daytime), data = micro_linear3)
+# day_model_1a_ground <- lmer(ground_temperature_mean ~ drt_treatment*dayornight + (1|fire_class), data = micro_linear3)
+# day_model_1b_ground <- lmer(ground_temperature_mean ~ drt_treatment*dayornight + (1|loggerID), data = micro_linear3)
+# day_model_1c_ground <- lmer(ground_temperature_mean ~ fire_class*dayornight + (1|daytime), data = micro_linear3)
+# day_model_1d_ground <- lmer(ground_temperature_mean ~ drt_treatment*dayornight + (1|daytime) + (1|fire_class), data = micro_linear3)
+# day_model_1e_ground <- lmer(ground_temperature_mean ~ drt_treatment*dayornight*fire_class + (1|daytime), data = micro_linear3)
+# 
+# anova(day_model_1_ground,day_model_1a_ground,day_model_1b_ground,day_model_1c_ground,day_model_1d_ground,day_model_1e_ground)
+# 
+# 
+# day_model_1_soil <- lmer(soil_temperature_mean ~ drt_treatment*dayornight + (1|daytime), data = micro_linear3)
+# day_model_1a_soil <- lmer(soil_temperature_mean ~ drt_treatment*dayornight + (1|fire_class), data = micro_linear3)
+# day_model_1b_soil <- lmer(soil_temperature_mean ~ drt_treatment*dayornight + (1|loggerID), data = micro_linear3)
+# day_model_1c_soil <- lmer(soil_temperature_mean ~ fire_class*dayornight + (1|daytime), data = micro_linear3)
+# day_model_1d_soil <- lmer(soil_temperature_mean ~ drt_treatment*dayornight + (1|daytime) + (1|fire_class), data = micro_linear3)
+# day_model_1e_soil <- lmer(soil_temperature_mean ~ drt_treatment*dayornight*fire_class + (1|daytime) + (1|fire_class), data = micro_linear3)
+# 
+# anova(day_model_1_soil,day_model_1a_soil,day_model_1b_soil,day_model_1c_soil,day_model_1d_soil,day_model_1e_soil)
+# 
+# day_model_1_moist <- lmer(soil_moisture_mean ~ drt_treatment*dayornight + (1|daytime), data = micro_linear3)
+# day_model_1a_moist <- lmer(soil_moisture_mean ~ drt_treatment*dayornight + (1|fire_class), data = micro_linear3)
+# day_model_1b_moist <- lmer(soil_moisture_mean ~ drt_treatment*dayornight + (1|loggerID), data = micro_linear3)
+# day_model_1c_moist <- lmer(soil_moisture_mean ~ fire_class*dayornight + (1|daytime), data = micro_linear3)
+# day_model_1d_moist <- lmer(soil_moisture_mean ~ drt_treatment*dayornight + (1|daytime) + (1|fire_class), data = micro_linear3)
+# day_model_1e_moist <- lmer(soil_moisture_mean ~ drt_treatment*dayornight*fire_class + (1|daytime) + (1|fire_class), data = micro_linear3)
+# 
+# anova(day_model_1_moist,day_model_1a_moist,day_model_1b_moist,day_model_1c_moist,day_model_1d_moist,day_model_1e_moist)
 
 ```
 
@@ -2641,5 +3104,1658 @@ plot <- ggplot(micro_linear3, aes(x = dayornight, y = soil_moisture_mean)) +
   scale_fill_manual(values = c("day" = "yellow", "night" = "#404040")) +
   theme_modern()
 ggsave(file.path("data/test_mixed", "moist_dn_11.png"), plot, height = 40, width = 80, units = "cm")
+```
+```{r max_min_models_combined}
+# Maximum Values
+model_air_max <- lmer(air_temperature_max ~ site*land_type + (1|daytime), data = micro_linear)
+summary(model_air_max)
+anova(model_air_max)
+model_air_means_max <- emmeans(object = model_air_max, ~ site|land_type)
+
+gr_max <- ref_grid(model_air_max, cov.keep= c('site', 'land_type'))
+emm_max <- emmeans(gr_max, spec= c('site', 'land_type'), level= 0.95)
+emm_max
+# Minimum Values
+model_air_min <- lmer(air_temperature_min ~ site*land_type + (1|daytime), data = micro_linear)
+summary(model_air_min)
+anova(model_air_min)
+model_air_means_min <- emmeans(object = model_air_min, ~ site|land_type)
+
+gr_min <- ref_grid(model_air_min, cov.keep= c('site', 'land_type'))
+emm_min <- emmeans(gr_min, spec= c('site', 'land_type'), level= 0.95)
+emm_min
+
+# 3. Plot with CL's
+plot <- ggplot(data = micro_linear, aes(x = land_type, y = air_temperature_max)) +
+  # Add base data for maximum temperatures
+  geom_violin(aes(x = land_type, y = air_temperature_max, fill = land_type), color = "white", alpha = 0.75) +
+    facet_grid(.~site) +
+  geom_jitter2(aes(x = land_type, y = air_temperature_max),width = 0.05, alpha = 0.15, color = 'red') +
+  scale_fill_manual(values = c("Forested" = "darkolivegreen4",
+                                "Open" = "darkolivegreen2")) +
+  labs(y = "Air Temperature (Celsius)", x = "", fill = "Land Type") +
+
+  # Add pointrange and line from means (maximum temperature)
+  geom_line(data = as.data.frame(emm_max), aes(y = emmean, group = 1), linewidth = 1) +
+  geom_pointrange(
+    data = as.data.frame(emm_max),
+    aes(y = emmean, ymin = lower.CL, ymax = upper.CL),
+    size = 1,
+    color = "red",
+    linewidth = 1.5
+  ) +
+    # Add pointrange and line from  (minimum temperature)
+   geom_violin(aes(x = land_type, y = air_temperature_min, fill = land_type), color = "white", alpha = 0.75) +
+    geom_jitter2(aes(x = land_type, y = air_temperature_min),width = 0.05, alpha = 0.15, color = 'blue') +
+  geom_line(data = as.data.frame(emm_min), aes(y = emmean, group = 1), linewidth = 1) +
+  geom_pointrange(
+    data = as.data.frame(emm_min),
+    aes(y = emmean, ymin = lower.CL, ymax = upper.CL),
+    size = 1,
+    color = "blue",
+    linewidth = 1.5
+  ) +
+  theme_modern()
+ggsave(file.path("data/plots/minmax_kasely", "air_min_max.png"), plot, height = 40, width = 80, units = "cm")
+
+################################################"""
+
+# Maximum Values
+model_ground_max <- lmer(ground_temperature_max ~ site*land_type + (1|daytime), data = micro_linear)
+summary(model_ground_max)
+anova(model_ground_max)
+model_ground_means_max <- emmeans(object = model_ground_max, ~ site|land_type)
+
+gr_max <- ref_grid(model_ground_max, cov.keep= c('site', 'land_type'))
+emm_max <- emmeans(gr_max, spec= c('site', 'land_type'), level= 0.95)
+emm_max
+# Minimum Values
+model_ground_min <- lmer(ground_temperature_min ~ site*land_type + (1|daytime), data = micro_linear)
+summary(model_ground_min)
+anova(model_ground_min)
+model_ground_means_min <- emmeans(object = model_ground_min, ~ site|land_type)
+
+gr_min <- ref_grid(model_ground_min, cov.keep= c('site', 'land_type'))
+emm_min <- emmeans(gr_min, spec= c('site', 'land_type'), level= 0.95)
+emm_min
+
+# 3. Plot with CL's
+plot <- ggplot(data = micro_linear, aes(x = land_type, y = ground_temperature_max)) +
+  # Add base data for maximum temperatures
+  geom_violin(aes(x = land_type, y = ground_temperature_max, fill = land_type), color = "white", alpha = 0.75) +
+    facet_grid(.~site) +
+  geom_jitter2(aes(x = land_type, y = ground_temperature_max),width = 0.05, alpha = 0.15, color = 'red') +
+  scale_fill_manual(values = c("Forested" = "darkolivegreen4",
+                                "Open" = "darkolivegreen2")) +
+  labs(y = "Ground Temperature (Celsius)", x = "", fill = "Land Type") +
+
+  # Add pointrange and line from means (maximum temperature)
+  geom_line(data = as.data.frame(emm_max), aes(y = emmean, group = 1), linewidth = 1) +
+  geom_pointrange(
+    data = as.data.frame(emm_max),
+    aes(y = emmean, ymin = lower.CL, ymax = upper.CL),
+    size = 1,
+    color = "red",
+    linewidth = 1.5
+  ) +
+    # Add pointrange and line from  (minimum temperature)
+   geom_violin(aes(x = land_type, y = ground_temperature_min, fill = land_type), color = "white", alpha = 0.75) +
+    geom_jitter2(aes(x = land_type, y = ground_temperature_min),width = 0.05, alpha = 0.15, color = 'blue') +
+  geom_line(data = as.data.frame(emm_min), aes(y = emmean, group = 1), linewidth = 1) +
+  geom_pointrange(
+    data = as.data.frame(emm_min),
+    aes(y = emmean, ymin = lower.CL, ymax = upper.CL),
+    size = 1,
+    color = "blue",
+    linewidth = 1.5
+  ) +
+  theme_modern()
+ggsave(file.path("data/plots/minmax_kasely", "ground_min_max.png"), plot, height = 40, width = 80, units = "cm")
+
+################################################"""
+
+# Maximum Values
+model_soil_max <- lmer(soil_temperature_max ~ site*land_type + (1|daytime), data = micro_linear)
+summary(model_soil_max)
+anova(model_soil_max)
+model_soil_means_max <- emmeans(object = model_soil_max, ~ site|land_type)
+
+gr_max <- ref_grid(model_soil_max, cov.keep= c('site', 'land_type'))
+emm_max <- emmeans(gr_max, spec= c('site', 'land_type'), level= 0.95)
+emm_max
+# Minimum Values
+model_soil_min <- lmer(soil_temperature_min ~ site*land_type + (1|daytime), data = micro_linear)
+summary(model_soil_min)
+anova(model_soil_min)
+model_soil_means_min <- emmeans(object = model_soil_min, ~ site|land_type)
+
+gr_min <- ref_grid(model_soil_min, cov.keep= c('site', 'land_type'))
+emm_min <- emmeans(gr_min, spec= c('site', 'land_type'), level= 0.95)
+emm_min
+
+# 3. Plot with CL's
+plot <- ggplot(data = micro_linear, aes(x = land_type, y = soil_temperature_max)) +
+  # Add base data for maximum temperatures
+  geom_violin(aes(x = land_type, y = soil_temperature_max, fill = land_type), color = "white", alpha = 0.75) +
+    facet_grid(.~site) +
+  geom_jitter2(aes(x = land_type, y = soil_temperature_max),width = 0.05, alpha = 0.15, color = 'red') +
+  scale_fill_manual(values = c("Forested" = "darkolivegreen4",
+                                "Open" = "darkolivegreen2")) +
+  labs(y = "Soil Temperature (Celsius)", x = "", fill = "Land Type") +
+
+  # Add pointrange and line from means (maximum temperature)
+  geom_line(data = as.data.frame(emm_max), aes(y = emmean, group = 1), linewidth = 1) +
+  geom_pointrange(
+    data = as.data.frame(emm_max),
+    aes(y = emmean, ymin = lower.CL, ymax = upper.CL),
+    size = 1,
+    color = "red",
+    linewidth = 1.5
+  ) +
+    # Add pointrange and line from  (minimum temperature)
+   geom_violin(aes(x = land_type, y = soil_temperature_min, fill = land_type), color = "white", alpha = 0.75) +
+    geom_jitter2(aes(x = land_type, y = soil_temperature_min),width = 0.05, alpha = 0.15, color = 'blue') +
+  geom_line(data = as.data.frame(emm_min), aes(y = emmean, group = 1), linewidth = 1) +
+  geom_pointrange(
+    data = as.data.frame(emm_min),
+    aes(y = emmean, ymin = lower.CL, ymax = upper.CL),
+    size = 1,
+    color = "blue",
+    linewidth = 1.5
+  ) +
+  theme_modern()
+ggsave(file.path("data/plots/minmax_kasely", "soil_min_max.png"), plot, height = 40, width = 80, units = "cm")
+
+################################################"""
+
+# Maximum Values
+model_moist_max <- lmer(soil_moisture_max ~ site*land_type + (1|loggerID), data = micro_linear)
+summary(model_moist_max)
+anova(model_moist_max)
+model_moist_means_max <- emmeans(object = model_moist_max, ~ site|land_type)
+
+gr_max <- ref_grid(model_moist_max, cov.keep= c('site', 'land_type'))
+emm_max <- emmeans(gr_max, spec= c('site', 'land_type'), level= 0.95)
+emm_max
+# Minimum Values
+model_moist_min <- lmer(soil_moisture_min ~ site*land_type + (1|loggerID), data = micro_linear)
+summary(model_moist_min)
+anova(model_moist_min)
+model_moist_means_min <- emmeans(object = model_moist_min, ~ site|land_type)
+
+gr_min <- ref_grid(model_moist_min, cov.keep= c('site', 'land_type'))
+emm_min <- emmeans(gr_min, spec= c('site', 'land_type'), level= 0.95)
+emm_min
+
+# 3. Plot with CL's
+plot <- ggplot(data = micro_linear, aes(x = land_type, y = soil_moisture_max)) +
+  # Add base data for maximum temperatures
+  geom_violin(aes(x = land_type, y = soil_moisture_max, fill = land_type), color = "white", alpha = 0.75) +
+    facet_grid(.~site) +
+  geom_jitter2(aes(x = land_type, y = soil_moisture_max),width = 0.05, alpha = 0.15, color = 'red') +
+  scale_fill_manual(values = c("Forested" = "darkolivegreen4",
+                                "Open" = "darkolivegreen2")) +
+  labs(y = "Soil Moisture (%) )", x = "", fill = "Land Type") +
+
+  # Add pointrange and line from means (maximum temperature)
+  geom_line(data = as.data.frame(emm_max), aes(y = emmean, group = 1), linewidth = 1) +
+  geom_pointrange(
+    data = as.data.frame(emm_max),
+    aes(y = emmean, ymin = lower.CL, ymax = upper.CL),
+    size = 1,
+    color = "red",
+    linewidth = 1.5
+  ) +
+    # Add pointrange and line from  (minimum temperature)
+   geom_violin(aes(x = land_type, y = soil_moisture_min, fill = land_type), color = "white", alpha = 0.75) +
+    geom_jitter2(aes(x = land_type, y = soil_moisture_min),width = 0.05, alpha = 0.15, color = 'blue') +
+  geom_line(data = as.data.frame(emm_min), aes(y = emmean, group = 1), linewidth = 1) +
+  geom_pointrange(
+    data = as.data.frame(emm_min),
+    aes(y = emmean, ymin = lower.CL, ymax = upper.CL),
+    size = 1,
+    color = "blue",
+    linewidth = 1.5
+  ) +
+  theme_modern()
+ggsave(file.path("data/plots/minmax_kasely", "moist_min_max.png"), plot, height = 40, width = 80, units = "cm")
+
+################################################"""
+```
+
+
+
+
+```{r all plots lyseka}
+# Load required libraries
+
+###############################################################
+# Define temperature metrics to analyze
+metrics <- c("air_temperature_mean", "air_temperature_max",
+             "air_temperature_min", "air_temperature_range")
+
+
+# Initialize list to store results
+results_DURIN_2 <- list()
+
+# Loop over temperature metrics
+for (metric in metrics) {
+  # Fit a linear mixed model to assess how the temperature metric varies depending on the interaction of site and land types
+  model_DURIN_2 <- lmer(as.formula(paste0(metric, " ~ site * land_type + (1|daytime)")), data = micro_linear)
+  
+  # Generate a summary table of estimated means accounting for the interaction term of site and land type
+  summary_table_DURIN_2 <- emmeans(model_DURIN_2, ~ site + land_type) %>%
+    as_tibble() %>%
+    select(site, land_type, emmean, SE, df, lower.CL, upper.CL)
+
+  
+  # Export summary table to Word document
+  doc <- read_docx()
+  doc <- body_add_table(doc, summary_table_DURIN_2)
+# CHANGE TO YOUR PATHWAY!!!! my computer doesn't like relative pathways
+  print(doc, file.path("D:/Cours/DURIN/Code/Durin_data/data/plots/Models",target = paste0(metric, "DURIN_summary_table.docx")))
+  
+  # Paired comparisons with significance tests (doesn't yet print to word)
+  summary_paired_DURIN_2 <- pairs(emmeans(model_DURIN_2, ~ site*land_type), simple = "each")
+# SUmmary anova for the model, i.e. is site, or land type or interaction significant over all. Then use the paired approach above to figure out differences.
+  summary_anova_DURIN_2 <- anova(model_DURIN_2)
+
+        
+  # Plot the estimated means for each site and land type combination
+  p <- ggplot(micro_linear) +
+    geom_violin(aes(x = land_type, y = !!sym(metric), fill = land_type), alpha = 0.5) +
+    geom_jitter(aes(x = land_type, y = !!sym(metric)), color = "darkgrey", width = 0.2) +
+    scale_fill_manual(values = c("Forested" = "darkolivegreen4",
+                                "Open" = "darkolivegreen2")) +
+  # Add the estimated means data over the raw datasets as points with error bars connected
+    geom_line(data = summary_table_DURIN_2, aes(x = land_type, y = emmean, group = 1),
+              linewidth = 1) +
+    geom_pointrange(data = summary_table_DURIN_2,
+                    aes(x = land_type, y = emmean,
+                        ymin = lower.CL,
+                        ymax = upper.CL,
+                        color = land_type),
+                    size = 1) +
+    scale_color_manual(values = c("Forested" = "black",
+                                "Open" = "black")) +
+    facet_wrap(~ site) +
+    labs(title = paste0("Estimated ", metric, " Temperature by Site and Land Type"),
+         y = "Temperature (Celsius)",
+         color = "Land Type") +
+    theme_modern()
+  
+  # Save the plot as an .jpeg file
+# CHANGE TO YOUR PATHWAY!!!! my computer doesn't like relative pathways
+  ggsave(file.path("D:/Cours/DURIN/Code/Durin_data/data/plots/Models", paste0(metric, "_temperature_plot_summary.jpeg")), plot = p)
+  
+  # Store results in list
+  results_DURIN_2[[metric]] <- list(model = model_DURIN_2,
+                                    summary_table = summary_table_DURIN_2, plot = p)
+}
+
+#####################################################################################
+###############################################################
+# Define temperature metrics to analyze
+metrics <- c("ground_temperature_mean", "ground_temperature_max",
+             "ground_temperature_min", "ground_temperature_range")
+
+
+# Initialize list to store results
+results_DURIN_2 <- list()
+
+# Loop over temperature metrics
+for (metric in metrics) {
+  # Fit a linear mixed model to assess how the temperature metric varies depending on the interaction of site and land types
+  model_DURIN_2 <- lmer(as.formula(paste0(metric, " ~ site * land_type + (1|daytime)")), data = micro_linear)
+  
+  # Generate a summary table of estimated means accounting for the interaction term of site and land type
+  summary_table_DURIN_2 <- emmeans(model_DURIN_2, ~ site + land_type) %>%
+    as_tibble() %>%
+    select(site, land_type, emmean, SE, df, lower.CL, upper.CL)
+
+  
+  # Export summary table to Word document
+  doc <- read_docx()
+  doc <- body_add_table(doc, summary_table_DURIN_2)
+# CHANGE TO YOUR PATHWAY!!!! my computer doesn't like relative pathways
+  print(doc, file.path("D:/Cours/DURIN/Code/Durin_data/data/plots/Models",target = paste0(metric, "DURIN_summary_table.docx")))
+  
+  # Paired comparisons with significance tests (doesn't yet print to word)
+  summary_paired_DURIN_2 <- pairs(emmeans(model_DURIN_2, ~ site*land_type), simple = "each")
+# SUmmary anova for the model, i.e. is site, or land type or interaction significant over all. Then use the paired approach above to figure out differences.
+  summary_anova_DURIN_2 <- anova(model_DURIN_2)
+
+        
+  # Plot the estimated means for each site and land type combination
+  p <- ggplot(micro_linear) +
+    geom_violin(aes(x = land_type, y = !!sym(metric), fill = land_type), alpha = 0.5) +
+    geom_jitter(aes(x = land_type, y = !!sym(metric)), color = "darkgrey", width = 0.2) +
+    scale_fill_manual(values = c("Forested" = "darkolivegreen4",
+                                "Open" = "darkolivegreen2")) +
+  # Add the estimated means data over the raw datasets as points with error bars connected
+    geom_line(data = summary_table_DURIN_2, aes(x = land_type, y = emmean, group = 1),
+              linewidth = 1) +
+    geom_pointrange(data = summary_table_DURIN_2,
+                    aes(x = land_type, y = emmean,
+                        ymin = lower.CL,
+                        ymax = upper.CL,
+                        color = land_type),
+                    size = 1) +
+    scale_color_manual(values = c("Forested" = "black",
+                                "Open" = "black")) +
+    facet_wrap(~ site) +
+    labs(title = paste0("Estimated ", metric, " Temperature by Site and Land Type"),
+         y = "Temperature (Celsius)",
+         color = "Land Type") +
+    theme_modern()
+  
+  # Save the plot as an .jpeg file
+# CHANGE TO YOUR PATHWAY!!!! my computer doesn't like relative pathways
+  ggsave(file.path("D:/Cours/DURIN/Code/Durin_data/data/plots/Models", paste0(metric, "_temperature_plot_summary.jpeg")), plot = p)
+  
+  # Store results in list
+  results_DURIN_2[[metric]] <- list(model = model_DURIN_2,
+                                    summary_table = summary_table_DURIN_2, plot = p)
+}
+
+#####################################################################################
+###############################################################
+# Define temperature metrics to analyze
+metrics <- c("soil_temperature_mean", "soil_temperature_max",
+             "soil_temperature_min", "soil_temperature_range")
+
+
+# Initialize list to store results
+results_DURIN_2 <- list()
+
+# Loop over temperature metrics
+for (metric in metrics) {
+  # Fit a linear mixed model to assess how the temperature metric varies depending on the interaction of site and land types
+  model_DURIN_2 <- lmer(as.formula(paste0(metric, " ~ site * land_type + (1|daytime)")), data = micro_linear)
+  
+  # Generate a summary table of estimated means accounting for the interaction term of site and land type
+  summary_table_DURIN_2 <- emmeans(model_DURIN_2, ~ site + land_type) %>%
+    as_tibble() %>%
+    select(site, land_type, emmean, SE, df, lower.CL, upper.CL)
+
+  
+  # Export summary table to Word document
+  doc <- read_docx()
+  doc <- body_add_table(doc, summary_table_DURIN_2)
+# CHANGE TO YOUR PATHWAY!!!! my computer doesn't like relative pathways
+  print(doc, file.path("D:/Cours/DURIN/Code/Durin_data/data/plots/Models",target = paste0(metric, "DURIN_summary_table.docx")))
+  
+  # Paired comparisons with significance tests (doesn't yet print to word)
+  summary_paired_DURIN_2 <- pairs(emmeans(model_DURIN_2, ~ site*land_type), simple = "each")
+# SUmmary anova for the model, i.e. is site, or land type or interaction significant over all. Then use the paired approach above to figure out differences.
+  summary_anova_DURIN_2 <- anova(model_DURIN_2)
+
+        
+  # Plot the estimated means for each site and land type combination
+  p <- ggplot(micro_linear) +
+    geom_violin(aes(x = land_type, y = !!sym(metric), fill = land_type), alpha = 0.5) +
+    geom_jitter(aes(x = land_type, y = !!sym(metric)), color = "darkgrey", width = 0.2) +
+    scale_fill_manual(values = c("Forested" = "darkolivegreen4",
+                                "Open" = "darkolivegreen2")) +
+  # Add the estimated means data over the raw datasets as points with error bars connected
+    geom_line(data = summary_table_DURIN_2, aes(x = land_type, y = emmean, group = 1),
+              linewidth = 1) +
+    geom_pointrange(data = summary_table_DURIN_2,
+                    aes(x = land_type, y = emmean,
+                        ymin = lower.CL,
+                        ymax = upper.CL,
+                        color = land_type),
+                    size = 1) +
+    scale_color_manual(values = c("Forested" = "black",
+                                "Open" = "black")) +
+    facet_wrap(~ site) +
+    labs(title = paste0("Estimated ", metric, " Temperature by Site and Land Type"),
+         y = "Temperature (Celsius)",
+         color = "Land Type") +
+    theme_modern()
+  
+  # Save the plot as an .jpeg file
+# CHANGE TO YOUR PATHWAY!!!! my computer doesn't like relative pathways
+  ggsave(file.path("D:/Cours/DURIN/Code/Durin_data/data/plots/Models", paste0(metric, "_temperature_plot_summary.jpeg")), plot = p)
+  
+  # Store results in list
+  results_DURIN_2[[metric]] <- list(model = model_DURIN_2,
+                                    summary_table = summary_table_DURIN_2, plot = p)
+}
+
+#####################################################################################
+###############################################################
+# Define temperature metrics to analyze
+metrics <- c("soil_moisture_mean", "soil_moisture_max",
+             "soil_moisture_min", "soil_moisture_range")
+
+
+# Initialize list to store results
+results_DURIN_2 <- list()
+
+# Loop over temperature metrics
+for (metric in metrics) {
+  # Fit a linear mixed model to assess how the temperature metric varies depending on the interaction of site and land types
+  model_DURIN_2 <- lmer(as.formula(paste0(metric, " ~ site * land_type + (1 | loggerID)")), data = micro_linear)
+  
+  # Generate a summary table of estimated means accounting for the interaction term of site and land type
+  summary_table_DURIN_2 <- emmeans(model_DURIN_2, ~ site + land_type) %>%
+    as_tibble() %>%
+    select(site, land_type, emmean, SE, df, lower.CL, upper.CL)
+
+  
+  # Export summary table to Word document
+  doc <- read_docx()
+  doc <- body_add_table(doc, summary_table_DURIN_2)
+# CHANGE TO YOUR PATHWAY!!!! my computer doesn't like relative pathways
+  print(doc, file.path("D:/Cours/DURIN/Code/Durin_data/data/plots/Models",target = paste0(metric, "DURIN_summary_table.docx")))
+  
+  # Paired comparisons with significance tests (doesn't yet print to word)
+  summary_paired_DURIN_2 <- pairs(emmeans(model_DURIN_2, ~ site*land_type), simple = "each")
+# SUmmary anova for the model, i.e. is site, or land type or interaction significant over all. Then use the paired approach above to figure out differences.
+  summary_anova_DURIN_2 <- anova(model_DURIN_2)
+
+        
+  # Plot the estimated means for each site and land type combination
+  p <- ggplot(micro_linear) +
+    geom_violin(aes(x = land_type, y = !!sym(metric), fill = land_type), alpha = 0.5) +
+    geom_jitter(aes(x = land_type, y = !!sym(metric)), color = "darkgrey", width = 0.2) +
+    scale_fill_manual(values = c("Forested" = "darkolivegreen4",
+                                "Open" = "darkolivegreen2")) +
+  # Add the estimated means data over the raw datasets as points with error bars connected
+    geom_line(data = summary_table_DURIN_2, aes(x = land_type, y = emmean, group = 1),
+              linewidth = 1) +
+    geom_pointrange(data = summary_table_DURIN_2,
+                    aes(x = land_type, y = emmean,
+                        ymin = lower.CL,
+                        ymax = upper.CL,
+                        color = land_type),
+                    size = 1) +
+    scale_color_manual(values = c("Forested" = "black",
+                                "Open" = "black")) +
+    facet_wrap(~ site) +
+    labs(title = paste0("Estimated ", metric, " Temperature by Site and Land Type"),
+         y = "Soil Moisture",
+         color = "Land Type") +
+    theme_modern()
+  
+  # Save the plot as an .jpeg file
+# CHANGE TO YOUR PATHWAY!!!! my computer doesn't like relative pathways
+  ggsave(file.path("D:/Cours/DURIN/Code/Durin_data/data/plots/Models", paste0(metric, "_temperature_plot_summary.jpeg")), plot = p)
+  
+  # Store results in list
+  results_DURIN_2[[metric]] <- list(model = model_DURIN_2,
+                                    summary_table = summary_table_DURIN_2, plot = p)
+}
+
+#####################################################################################
+```
+
+
+```{r drought_net_loops_classic}
+emm_options(lmerTest.limit = 10000)
+emm_options(pbkrtest.limit = 10000)
+# Reorder levels for plotting
+#re-order factor levels for region
+micro_linear2$fire_class <- factor(micro_linear2$fire_class, levels=c('Pioneer', 'Building', 'Mature'))
+micro_linear2$drt_treatment <- factor(micro_linear2$drt_treatment, levels=c('0', '50', '90'))
+
+#####################################################################################
+# Define temperature metrics to analyze
+metrics <- c("air_temperature_mean", "air_temperature_max",
+             "air_temperature_min", "air_temperature_range")
+
+
+# Initialize list to store results
+results_DN <- list()
+
+
+# Loop over temperature metrics
+for (metric in metrics) {
+  # Fit a linear mixed model to assess how the temperature metric varies depending on the interaction of fire_class and land types
+  model_air_DN <- lmer(as.formula(paste0(metric, " ~ fire_class * drt_treatment + (1 | daytime)")), data = micro_linear2)
+  
+  # Generate a summary table of estimated means accounting for the interaction term of fire_class and land type
+  summary_table_air_DN <- emmeans(model_air_DN, ~ fire_class + drt_treatment) %>%
+    as_tibble() %>%
+    select(fire_class, drt_treatment, emmean, SE, df, lower.CL, upper.CL)
+  
+  # Export summary table to Word document
+  doc <- read_docx()
+  doc <- body_add_table(doc, summary_table_air_DN)
+# CHANGE YOUR PATHWAY!!!
+  print(doc, file.path("D:/Cours/DURIN/Code/Durin_data/data/plots/Models/drought_net", target = paste0(metric, "DroughtNet_summary_table.docx")))
+  
+# Paired comparisons with significance tests (doesn't yet print to word)
+  summary_paired_air_DN <- pairs(emmeans(model_air_DN, ~ fire_class*drt_treatment), simple = "each")
+# SUmmary anova for the model, i.e. is site, or land type or interaction significant over all. Then use the paired approach above to figure out differences.
+  summary_anova_air_DN <- anova(model_air_DN)
+
+  # Plot the estimated means for each fire_class and drought treatment combination
+  p <- ggplot(micro_linear2) +
+    geom_violin(aes(x = drt_treatment, y = !!sym(metric),
+                    fill = drt_treatment), alpha = 1) +
+    geom_jitter(aes(x = drt_treatment, y = !!sym(metric),
+                color = "black"), width = 0.1, alpha = 0.23) +
+    scale_fill_manual(values = c("0" = "lightskyblue4",
+                                "50" = "lightskyblue3",
+                               "90" = "lightskyblue1")) +
+  # Add the estimated means data over the raw datasets as points with error bars connected
+    geom_line(data = summary_table_air_DN, aes(x = drt_treatment, y = emmean, group = 1),
+              linewidth = 1) +
+    geom_pointrange(data = summary_table_air_DN,
+                    aes(x = drt_treatment, y = emmean,
+                        ymin = lower.CL,
+                        ymax = upper.CL,
+                        color = drt_treatment),
+                    size = 1) +
+    scale_color_manual(values = c("0" = "black",
+                                "50" = "black",
+                                "90" = "black")) +
+    facet_wrap(~ fire_class) +
+    labs(title = paste0("Estimated ", metric, " Temperature by Fire Class and Drought Treatment"),
+         y = "Temperature (Celsius)",
+         color = "Drought Treatment") +
+    theme_modern()
+  
+  # Save the plot as an .jpeg file
+# CHANGE YOUR PATHWAY!!!
+  ggsave(file.path("D:/Cours/DURIN/Code/Durin_data/data/plots/Models/drought_net", paste0(metric, "_temperature_plot_summary.jpeg")), plot = p)
+  
+  # Store results in list
+  results_DN[[metric]] <- list(model = model_air_DN,
+                                    summary_table = summary_table_air_DN, plot = p)
+}
+
+# Check if either fire_class or drought treatment has a significant influence on temperature
+# summary(results_air_DN[["mean"]][["model"]])$coefficients
+#################################################################################################################
+#####################################################################################
+# Define temperature metrics to analyze
+metrics <- c("ground_temperature_mean", "ground_temperature_max",
+             "ground_temperature_min", "ground_temperature_range")
+
+
+# Initialize list to store results
+results_DN <- list()
+
+
+# Loop over temperature metrics
+for (metric in metrics) {
+  # Fit a linear mixed model to assess how the temperature metric varies depending on the interaction of fire_class and land types
+  model_ground_DN <- lmer(as.formula(paste0(metric, " ~ fire_class * drt_treatment + (1 | daytime)")), data = micro_linear2)
+  
+  # Generate a summary table of estimated means accounting for the interaction term of fire_class and land type
+  summary_table_ground_DN <- emmeans(model_ground_DN, ~ fire_class + drt_treatment) %>%
+    as_tibble() %>%
+    select(fire_class, drt_treatment, emmean, SE, df, lower.CL, upper.CL)
+  
+  # Export summary table to Word document
+  doc <- read_docx()
+  doc <- body_add_table(doc, summary_table_ground_DN)
+# CHANGE YOUR PATHWAY!!!
+  print(doc, file.path("D:/Cours/DURIN/Code/Durin_data/data/plots/Models/drought_net", target = paste0(metric, "DroughtNet_summary_table.docx")))
+  
+# Paired comparisons with significance tests (doesn't yet print to word)
+  summary_paired_ground_DN <- pairs(emmeans(model_ground_DN, ~ fire_class*drt_treatment), simple = "each")
+# SUmmary anova for the model, i.e. is site, or land type or interaction significant over all. Then use the paired approach above to figure out differences.
+  summary_anova_ground_DN <- anova(model_ground_DN)
+
+  # Plot the estimated means for each fire_class and drought treatment combination
+  p <- ggplot(micro_linear2) +
+    geom_violin(aes(x = drt_treatment, y = !!sym(metric),
+                    fill = drt_treatment), alpha = 1) +
+    geom_jitter(aes(x = drt_treatment, y = !!sym(metric),
+                color = "black"), width = 0.1, alpha = 0.23) +
+    scale_fill_manual(values = c("0" = "lightskyblue4",
+                                "50" = "lightskyblue3",
+                               "90" = "lightskyblue1")) +
+  # Add the estimated means data over the raw datasets as points with error bars connected
+    geom_line(data = summary_table_ground_DN, aes(x = drt_treatment, y = emmean, group = 1),
+              linewidth = 1) +
+    geom_pointrange(data = summary_table_ground_DN,
+                    aes(x = drt_treatment, y = emmean,
+                        ymin = lower.CL,
+                        ymax = upper.CL,
+                        color = drt_treatment),
+                    size = 1) +
+    scale_color_manual(values = c("0" = "black",
+                                "50" = "black",
+                                "90" = "black")) +
+    facet_wrap(~ fire_class) +
+    labs(title = paste0("Estimated ", metric, " Temperature by Fire Class and Drought Treatment"),
+         y = "Temperature (Celsius)",
+         color = "Drought Treatment") +
+    theme_modern()
+  
+  # Save the plot as an .jpeg file
+# CHANGE YOUR PATHWAY!!!
+  ggsave(file.path("D:/Cours/DURIN/Code/Durin_data/data/plots/Models/drought_net", paste0(metric, "_temperature_plot_summary.jpeg")), plot = p)
+  
+  # Store results in list
+}
+
+# Check if either fire_class or drought treatment has a significant influence on temperature
+ #summary(results_air_DN[["mean"]][["model"]])$coefficients
+
+#################################################################################################################
+#####################################################################################
+# Define temperature metrics to analyze
+metrics <- c("soil_temperature_mean", "soil_temperature_max",
+             "soil_temperature_min", "soil_temperature_range")
+
+
+# Initialize list to store results
+results_DN <- list()
+
+
+# Loop over temperature metrics
+for (metric in metrics) {
+  # Fit a linear mixed model to assess how the temperature metric varies depending on the interaction of fire_class and land types
+  model_soil_DN <- lmer(as.formula(paste0(metric, " ~ fire_class * drt_treatment + (1 | daytime)")), data = micro_linear2)
+  
+  # Generate a summary table of estimated means accounting for the interaction term of fire_class and land type
+  summary_table_soil_DN <- emmeans(model_soil_DN, ~ fire_class + drt_treatment) %>%
+    as_tibble() %>%
+    select(fire_class, drt_treatment, emmean, SE, df, lower.CL, upper.CL)
+  
+  # Export summary table to Word document
+  doc <- read_docx()
+  doc <- body_add_table(doc, summary_table_soil_DN)
+# CHANGE YOUR PATHWAY!!!
+  print(doc, file.path("D:/Cours/DURIN/Code/Durin_data/data/plots/Models/drought_net", target = paste0(metric, "DroughtNet_summary_table.docx")))
+  
+# Paired comparisons with significance tests (doesn't yet print to word)
+  summary_paired_soil_DN <- pairs(emmeans(model_soil_DN, ~ fire_class*drt_treatment), simple = "each")
+# SUmmary anova for the model, i.e. is site, or land type or interaction significant over all. Then use the paired approach above to figure out differences.
+  summary_anova_soil_DN <- anova(model_soil_DN)
+
+  # Plot the estimated means for each fire_class and drought treatment combination
+  p <- ggplot(micro_linear2) +
+    geom_violin(aes(x = drt_treatment, y = !!sym(metric),
+                    fill = drt_treatment), alpha = 1) +
+    geom_jitter(aes(x = drt_treatment, y = !!sym(metric),
+                color = "black"), width = 0.1, alpha = 0.23) +
+    scale_fill_manual(values = c("0" = "lightskyblue4",
+                                "50" = "lightskyblue3",
+                               "90" = "lightskyblue1")) +
+  # Add the estimated means data over the raw datasets as points with error bars connected
+    geom_line(data = summary_table_soil_DN, aes(x = drt_treatment, y = emmean, group = 1),
+              linewidth = 1) +
+    geom_pointrange(data = summary_table_soil_DN,
+                    aes(x = drt_treatment, y = emmean,
+                        ymin = lower.CL,
+                        ymax = upper.CL,
+                        color = drt_treatment),
+                    size = 1) +
+    scale_color_manual(values = c("0" = "black",
+                                "50" = "black",
+                                "90" = "black")) +
+    facet_wrap(~ fire_class) +
+    labs(title = paste0("Estimated ", metric, " Temperature by Fire Class and Drought Treatment"),
+         y = "Temperature (Celsius)",
+         color = "Drought Treatment") +
+    theme_modern()
+  
+  # Save the plot as an .jpeg file
+# CHANGE YOUR PATHWAY!!!
+  ggsave(file.path("D:/Cours/DURIN/Code/Durin_data/data/plots/Models/drought_net", paste0(metric, "_temperature_plot_summary.jpeg")), plot = p)
+  
+  # Store results in list
+ 
+}
+
+# Check if either fire_class or drought treatment has a significant influence on temperature
+# summary(results_air_DN[["mean"]][["model"]])$coefficients
+#################################################################################################################
+#####################################################################################
+# Define temperature metrics to analyze
+metrics <- c("soil_moisture_mean", "soil_moisture_max",
+             "soil_moisture_min", "soil_moisture_range")
+
+
+# Initialize list to store results
+results_DN <- list()
+
+
+# Loop over temperature metrics
+for (metric in metrics) {
+  # Fit a linear mixed model to assess how the temperature metric varies depending on the interaction of fire_class and land types
+  model_moist_DN <- lmer(as.formula(paste0(metric, " ~ fire_class * drt_treatment + (1 | loggerID)")), data = micro_linear2)
+  
+  # Generate a summary table of estimated means accounting for the interaction term of fire_class and land type
+  summary_table_moist_DN <- emmeans(model_moist_DN, ~ fire_class + drt_treatment) %>%
+    as_tibble() %>%
+    select(fire_class, drt_treatment, emmean, SE, df, lower.CL, upper.CL)
+  
+  # Export summary table to Word document
+  doc <- read_docx()
+  doc <- body_add_table(doc, summary_table_moist_DN)
+# CHANGE YOUR PATHWAY!!!
+  print(doc, file.path("D:/Cours/DURIN/Code/Durin_data/data/plots/Models/drought_net", target = paste0(metric, "DroughtNet_summary_table.docx")))
+  
+# Paired comparisons with significance tests (doesn't yet print to word)
+  summary_paired_moist_DN <- pairs(emmeans(model_moist_DN, ~ fire_class*drt_treatment), simple = "each")
+# SUmmary anova for the model, i.e. is site, or land type or interaction significant over all. Then use the paired approach above to figure out differences.
+  summary_anova_moist_DN <- anova(model_moist_DN)
+
+  # Plot the estimated means for each fire_class and drought treatment combination
+  p <- ggplot(micro_linear2) +
+    geom_violin(aes(x = drt_treatment, y = !!sym(metric),
+                    fill = drt_treatment), alpha = 1) +
+    geom_jitter(aes(x = drt_treatment, y = !!sym(metric),
+                color = "black"), width = 0.1, alpha = 0.23) +
+    scale_fill_manual(values = c("0" = "lightskyblue4",
+                                "50" = "lightskyblue3",
+                               "90" = "lightskyblue1")) +
+  # Add the estimated means data over the raw datasets as points with error bars connected
+    geom_line(data = summary_table_moist_DN, aes(x = drt_treatment, y = emmean, group = 1),
+              linewidth = 1) +
+    geom_pointrange(data = summary_table_moist_DN,
+                    aes(x = drt_treatment, y = emmean,
+                        ymin = lower.CL,
+                        ymax = upper.CL,
+                        color = drt_treatment),
+                    size = 1) +
+    scale_color_manual(values = c("0" = "black",
+                                "50" = "black",
+                                "90" = "black")) +
+    facet_wrap(~ fire_class) +
+    labs(title = paste0("Estimated ", metric, "Soil Moisture by Fire Class and Drought Treatment"),
+         y = "Moisture",
+         color = "Drought Treatment") +
+    theme_modern()
+  
+  # Save the plot as an .jpeg file
+# CHANGE YOUR PATHWAY!!!
+  ggsave(file.path("D:/Cours/DURIN/Code/Durin_data/data/plots/Models/drought_net", paste0(metric, "_temperature_plot_summary.jpeg")), plot = p)
+  
+  # Store results in list
+ 
+}
+
+# Check if either fire_class or drought treatment has a significant influence on temperature
+# summary(results_air_DN[["mean"]][["model"]])$coefficients
+#################################################################################################################
+```
+
+```{r control vs 0% drt}
+
+micro_control <- micro_data2 %>%
+  filter(drt_treatment == "0" | species =="Control") %>%
+  mutate(species2 = ifelse(species == "Control","Control","Shrubs"))
+micro_control$fire_class <- factor(micro_control$fire_class, levels=c('Pioneer', 'Building', 'Mature'))
+
+#####################################################################################
+# Define temperature metrics to analyze
+metrics <- c("air_temperature_mean", "air_temperature_max",
+             "air_temperature_min", "air_temperature_range")
+
+
+# Initialize list to store results
+results_air_control <- list()
+
+
+# Loop over temperature metrics
+for (metric in metrics) {
+  # Fit a linear mixed model to assess how the temperature metric varies depending on the interaction of fire_class and land types
+  model_air_control <- lmer(as.formula(paste0(metric, " ~ fire_class * species2 + (1 | daytime)")), data = micro_control)
+  
+  # Generate a summary table of estimated means accounting for the interaction term of fire_class and land type
+  summary_table_air_control <- emmeans(model_air_control, ~ fire_class + species2) %>%
+    as_tibble() %>%
+    select(fire_class, species2, emmean, SE, df, lower.CL, upper.CL)
+  
+  # Export summary table to Word document
+  doc <- read_docx()
+  doc <- body_add_table(doc, summary_table_air_control)
+# CHANGE YOUR PATHWAY!!!
+  print(doc, file.path("D:/Cours/DURIN/Code/Durin_data/data/plots/Models/drought_net/control", target = paste0(metric, "DroughtNet_Control_summary_table.docx")))
+  
+# Paired comparisons with significance tests (doesn't yet print to word)
+  summary_paired_air_control <- pairs(emmeans(model_air_control, ~ fire_class*species2), simple = "each")
+# SUmmary anova for the model, i.e. is site, or land type or interaction significant over all. Then use the paired approach above to figure out differences.
+  summary_anova_air_control <- anova(model_air_control)
+
+  # Plot the estimated means for each fire_class and drought treatment combination
+  p <- ggplot(micro_control) +
+    geom_violin(aes(x = species2, y = !!sym(metric),
+                    fill = species2), alpha = 1) +
+    geom_jitter(aes(x = species2, y = !!sym(metric),
+                color = "black"), width = 0.1, alpha = 0.23) +
+    scale_fill_manual(values = c("Shrubs" = "lightgreen",
+                                "Control" = "brown")) +
+  # Add the estimated means data over the raw datasets as points with error bars connected
+    geom_line(data = summary_table_air_control, aes(x = species2, y = emmean, group = 1),
+              linewidth = 1) +
+    geom_pointrange(data = summary_table_air_control,
+                    aes(x = species2, y = emmean,
+                        ymin = lower.CL,
+                        ymax = upper.CL,
+                        color = species2),
+                    size = 1) +
+    scale_color_manual(values = c("Shrubs" = "black",
+                                "Control" = "black")) +
+    facet_wrap(~ fire_class) +
+    labs(title = paste0("Estimated ", metric, " Temperature by Fire Class Shrubs vs Control"),
+         y = "Temperature (Celsius)",
+         color = "Shrubs or Control") +
+    theme_modern()
+  
+  # Save the plot as an .jpeg file
+# CHANGE YOUR PATHWAY!!!
+  ggsave(file.path("D:/Cours/DURIN/Code/Durin_data/data/plots/Models/drought_net/control", paste0(metric, "_temperature_plot_summary.jpeg")), plot = p)
+  
+}
+####################################################
+####################################################
+# Define temperature metrics to analyze
+metrics <- c("ground_temperature_mean", "ground_temperature_max",
+             "ground_temperature_min", "ground_temperature_range")
+
+
+# Initialize list to store results
+results_ground_control <- list()
+
+
+# Loop over temperature metrics
+for (metric in metrics) {
+  # Fit a linear mixed model to assess how the temperature metric varies depending on the interaction of fire_class and land types
+  model_ground_control <- lmer(as.formula(paste0(metric, " ~ fire_class * species2 + (1 | daytime)")), data = micro_control)
+  
+  # Generate a summary table of estimated means accounting for the interaction term of fire_class and land type
+  summary_table_ground_control <- emmeans(model_ground_control, ~ fire_class + species2) %>%
+    as_tibble() %>%
+    select(fire_class, species2, emmean, SE, df, lower.CL, upper.CL)
+  
+  # Export summary table to Word document
+  doc <- read_docx()
+  doc <- body_add_table(doc, summary_table_ground_control)
+# CHANGE YOUR PATHWAY!!!
+  print(doc, file.path("D:/Cours/DURIN/Code/Durin_data/data/plots/Models/drought_net/control", target = paste0(metric, "DroughtNet_Control_summary_table.docx")))
+  
+# Paired comparisons with significance tests (doesn't yet print to word)
+  summary_paired_ground_control <- pairs(emmeans(model_ground_control, ~ fire_class*species2), simple = "each")
+# SUmmary anova for the model, i.e. is site, or land type or interaction significant over all. Then use the paired approach above to figure out differences.
+  summary_anova_ground_control <- anova(model_ground_control)
+
+  # Plot the estimated means for each fire_class and drought treatment combination
+  p <- ggplot(micro_control) +
+    geom_violin(aes(x = species2, y = !!sym(metric),
+                    fill = species2), alpha = 1) +
+    geom_jitter(aes(x = species2, y = !!sym(metric),
+                color = "black"), width = 0.1, alpha = 0.23) +
+    scale_fill_manual(values = c("Shrubs" = "lightgreen",
+                                "Control" = "brown")) +
+  # Add the estimated means data over the raw datasets as points with error bars connected
+    geom_line(data = summary_table_ground_control, aes(x = species2, y = emmean, group = 1),
+              linewidth = 1) +
+    geom_pointrange(data = summary_table_ground_control,
+                    aes(x = species2, y = emmean,
+                        ymin = lower.CL,
+                        ymax = upper.CL,
+                        color = species2),
+                    size = 1) +
+    scale_color_manual(values = c("Shrubs" = "black",
+                                "Control" = "black")) +
+    facet_wrap(~ fire_class) +
+    labs(title = paste0("Estimated ", metric, " Temperature by Fire Class Shrubs vs Control"),
+         y = "Temperature (Celsius)",
+         color = "Shrubs or Control") +
+    theme_modern()
+  
+  # Save the plot as an .jpeg file
+# CHANGE YOUR PATHWAY!!!
+  ggsave(file.path("D:/Cours/DURIN/Code/Durin_data/data/plots/Models/drought_net/control", paste0(metric, "_temperature_plot_summary.jpeg")), plot = p)
+  
+}
+
+####################################################
+# Define temperature metrics to analyze
+metrics <- c("soil_temperature_mean", "soil_temperature_max",
+             "soil_temperature_min", "soil_temperature_range")
+
+
+# Initialize list to store results
+results_soil_control <- list()
+
+
+# Loop over temperature metrics
+for (metric in metrics) {
+  # Fit a linear mixed model to assess how the temperature metric varies depending on the interaction of fire_class and land types
+  model_soil_control <- lmer(as.formula(paste0(metric, " ~ fire_class * species2 + (1 | daytime)")), data = micro_control)
+  
+  # Generate a summary table of estimated means accounting for the interaction term of fire_class and land type
+  summary_table_soil_control <- emmeans(model_soil_control, ~ fire_class + species2) %>%
+    as_tibble() %>%
+    select(fire_class, species2, emmean, SE, df, lower.CL, upper.CL)
+  
+  # Export summary table to Word document
+  doc <- read_docx()
+  doc <- body_add_table(doc, summary_table_soil_control)
+# CHANGE YOUR PATHWAY!!!
+  print(doc, file.path("D:/Cours/DURIN/Code/Durin_data/data/plots/Models/drought_net/control", target = paste0(metric, "DroughtNet_Control_summary_table.docx")))
+  
+# Paired comparisons with significance tests (doesn't yet print to word)
+  summary_paired_soil_control <- pairs(emmeans(model_soil_control, ~ fire_class*species2), simple = "each")
+# SUmmary anova for the model, i.e. is site, or land type or interaction significant over all. Then use the paired approach above to figure out differences.
+  summary_anova_soil_control <- anova(model_soil_control)
+
+  # Plot the estimated means for each fire_class and drought treatment combination
+  p <- ggplot(micro_control) +
+    geom_violin(aes(x = species2, y = !!sym(metric),
+                    fill = species2), alpha = 1) +
+    geom_jitter(aes(x = species2, y = !!sym(metric),
+                color = "black"), width = 0.1, alpha = 0.23) +
+    scale_fill_manual(values = c("Shrubs" = "lightgreen",
+                                "Control" = "brown")) +
+  # Add the estimated means data over the raw datasets as points with error bars connected
+    geom_line(data = summary_table_soil_control, aes(x = species2, y = emmean, group = 1),
+              linewidth = 1) +
+    geom_pointrange(data = summary_table_soil_control,
+                    aes(x = species2, y = emmean,
+                        ymin = lower.CL,
+                        ymax = upper.CL,
+                        color = species2),
+                    size = 1) +
+    scale_color_manual(values = c("Shrubs" = "black",
+                                "Control" = "black")) +
+    facet_wrap(~ fire_class) +
+    labs(title = paste0("Estimated ", metric, " by Fire Class Shrubs vs Control"),
+         y = "Temperature (Celsius)",
+         color = "Shrubs or Control") +
+    theme_modern()
+  
+  # Save the plot as an .jpeg file
+# CHANGE YOUR PATHWAY!!!
+  ggsave(file.path("D:/Cours/DURIN/Code/Durin_data/data/plots/Models/drought_net/control", paste0(metric, "_temperature_plot_summary.jpeg")), plot = p)
+  
+}
+
+####################################################
+# Define temperature metrics to analyze
+metrics <- c("soil_moisture_mean", "soil_moisture_max",
+             "soil_moisture_min", "soil_moisture_range")
+
+
+# Initialize list to store results
+results_moist_control <- list()
+
+
+# Loop over temperature metrics
+for (metric in metrics) {
+  # Fit a linear mixed model to assess how the temperature metric varies depending on the interaction of fire_class and land types
+  model_moist_control <- lmer(as.formula(paste0(metric, " ~ fire_class * species2 + (1 | loggerID)")), data = micro_control)
+  
+  # Generate a summary table of estimated means accounting for the interaction term of fire_class and land type
+  summary_table_moist_control <- emmeans(model_moist_control, ~ fire_class + species2) %>%
+    as_tibble() %>%
+    select(fire_class, species2, emmean, SE, df, lower.CL, upper.CL)
+  
+  # Export summary table to Word document
+  doc <- read_docx()
+  doc <- body_add_table(doc, summary_table_moist_control)
+# CHANGE YOUR PATHWAY!!!
+  print(doc, file.path("D:/Cours/DURIN/Code/Durin_data/data/plots/Models/drought_net/control", target = paste0(metric, "DroughtNet_Control_summary_table.docx")))
+  
+# Paired comparisons with significance tests (doesn't yet print to word)
+  summary_paired_moist_control <- pairs(emmeans(model_moist_control, ~ fire_class*species2), simple = "each")
+# SUmmary anova for the model, i.e. is site, or land type or interaction significant over all. Then use the paired approach above to figure out differences.
+  summary_anova_moist_control <- anova(model_moist_control)
+
+  # Plot the estimated means for each fire_class and drought treatment combination
+  p <- ggplot(micro_control) +
+    geom_violin(aes(x = species2, y = !!sym(metric),
+                    fill = species2), alpha = 1) +
+    geom_jitter(aes(x = species2, y = !!sym(metric),
+                color = "black"), width = 0.1, alpha = 0.23) +
+    scale_fill_manual(values = c("Shrubs" = "lightgreen",
+                                "Control" = "brown")) +
+  # Add the estimated means data over the raw datasets as points with error bars connected
+    geom_line(data = summary_table_moist_control, aes(x = species2, y = emmean, group = 1),
+              linewidth = 1) +
+    geom_pointrange(data = summary_table_moist_control,
+                    aes(x = species2, y = emmean,
+                        ymin = lower.CL,
+                        ymax = upper.CL,
+                        color = species2),
+                    size = 1) +
+    scale_color_manual(values = c("Shrubs" = "black",
+                                "Control" = "black")) +
+    facet_wrap(~ fire_class) +
+    labs(title = paste0("Estimated ", metric, " by Fire Class Shrubs vs Control"),
+         y = "Moisture",
+         color = "Shrubs or Control") +
+    theme_modern()
+  
+  # Save the plot as an .jpeg file
+# CHANGE YOUR PATHWAY!!!
+  ggsave(file.path("D:/Cours/DURIN/Code/Durin_data/data/plots/Models/drought_net/control", paste0(metric, "_temperature_plot_summary.jpeg")), plot = p)
+  
+}
+
+####################################################
+```
+
+```{r model_day_and_night}
+micro_day <- micro_data3 %>%
+  filter(species !="Control")
+micro_day$fire_class <- factor(micro_day$fire_class, levels=c('Pioneer', 'Building', 'Mature'))
+micro_day$drt_treatment <- factor(micro_day$drt_treatment, levels=c('0', '50', '90'))
+
+#####################################################################################
+# Define temperature metrics to analyze
+metrics <- c("air_temperature_mean", "air_temperature_max",
+             "air_temperature_min", "air_temperature_range")
+
+
+# Initialize list to store results
+results_air_day <- list()
+
+
+# Loop over temperature metrics
+for (metric in metrics) {
+  # Fit a linear mixed model to assess how the temperature metric varies depending on the interaction of fire_class and land types
+  model_air_day <- lmer(as.formula(paste0(metric, " ~ drt_treatment * dayornight * fire_class + (1 | daytime)")), data = micro_day)
+  
+  # Generate a summary table of estimated means accounting for the interaction term of fire_class and land type
+  summary_table_air_day <- emmeans(model_air_day, ~ drt_treatment + dayornight) %>%
+    as_tibble() %>%
+    select(drt_treatment, dayornight, emmean, SE, df, lower.CL, upper.CL)
+  
+  # Export summary table to Word document
+  doc <- read_docx()
+  doc <- body_add_table(doc, summary_table_air_day)
+# CHANGE YOUR PATHWAY!!!
+  print(doc, file.path("D:/Cours/DURIN/Code/Durin_data/data/plots/Models/drought_net/day", target = paste0(metric, "DroughtNet_dayornight_summary_table.docx")))
+  
+# Paired comparisons with significance tests (doesn't yet print to word)
+  summary_paired_air_day <- pairs(emmeans(model_air_day, ~ drt_treatment*dayornight), simple = "each")
+# SUmmary anova for the model, i.e. is site, or land type or interaction significant over all. Then use the paired approach above to figure out differences.
+  summary_anova_air_day <- anova(model_air_day)
+
+  # Plot the estimated means for each fire_class and drought treatment combination
+  p <- ggplot(micro_day) +
+    geom_violin(aes(x = dayornight, y = !!sym(metric),
+                    fill = dayornight), alpha = 1) +
+    geom_jitter(aes(x = dayornight, y = !!sym(metric),
+                color = "black"), width = 0.1, alpha = 0.23) +
+    scale_fill_manual(values = c("night" = "blue4",
+                                "day" = "darkgoldenrod1")) +
+  # Add the estimated means data over the raw datasets as points with error bars connected
+    geom_line(data = summary_table_air_day, aes(x = dayornight, y = emmean, group = 1),
+              linewidth = 1) +
+    geom_pointrange(data = summary_table_air_day,
+                    aes(x = dayornight, y = emmean,
+                        ymin = lower.CL,
+                        ymax = upper.CL,
+                        color = dayornight),
+                    size = 1) +
+    scale_color_manual(values = c("night" = "black",
+                                "day" = "black")) +
+    facet_wrap(~ drt_treatment) +
+    labs(title = paste0("Estimated ", metric, " Temperature by Treatment Night vs Day"),
+         y = "Temperature (Celsius)",
+         color = "Day or Night") +
+    theme_modern()
+  
+  # Save the plot as an .jpeg file
+# CHANGE YOUR PATHWAY!!!
+  ggsave(file.path("D:/Cours/DURIN/Code/Durin_data/data/plots/Models/drought_net/day", paste0(metric, "_temperature_plot_summary.jpeg")), plot = p)
+  
+}
+####################################################
+#####################################################################################
+# Define temperature metrics to analyze
+metrics <- c("ground_temperature_mean", "ground_temperature_max",
+             "ground_temperature_min", "ground_temperature_range")
+
+
+# Initialize list to store results
+results_ground_day <- list()
+
+
+# Loop over temperature metrics
+for (metric in metrics) {
+  # Fit a linear mixed model to assess how the temperature metric varies depending on the interaction of fire_class and land types
+  model_ground_day <- lmer(as.formula(paste0(metric, " ~ drt_treatment * dayornight * fire_class + (1 | daytime)")), data = micro_day)
+  
+  # Generate a summary table of estimated means accounting for the interaction term of fire_class and land type
+  summary_table_ground_day <- emmeans(model_ground_day, ~ drt_treatment + dayornight) %>%
+    as_tibble() %>%
+    select(drt_treatment, dayornight, emmean, SE, df, lower.CL, upper.CL)
+  
+  # Export summary table to Word document
+  doc <- read_docx()
+  doc <- body_add_table(doc, summary_table_ground_day)
+# CHANGE YOUR PATHWAY!!!
+  print(doc, file.path("D:/Cours/DURIN/Code/Durin_data/data/plots/Models/drought_net/day", target = paste0(metric, "DroughtNet_dayornight_summary_table.docx")))
+  
+# Paired comparisons with significance tests (doesn't yet print to word)
+  summary_paired_ground_day <- pairs(emmeans(model_ground_day, ~ drt_treatment*dayornight), simple = "each")
+# SUmmary anova for the model, i.e. is site, or land type or interaction significant over all. Then use the paired approach above to figure out differences.
+  summary_anova_ground_day <- anova(model_ground_day)
+
+  # Plot the estimated means for each fire_class and drought treatment combination
+  p <- ggplot(micro_day) +
+    geom_violin(aes(x = dayornight, y = !!sym(metric),
+                    fill = dayornight), alpha = 1) +
+    geom_jitter(aes(x = dayornight, y = !!sym(metric),
+                color = "black"), width = 0.1, alpha = 0.23) +
+    scale_fill_manual(values = c("night" = "blue4",
+                                "day" = "darkgoldenrod1")) +
+  # Add the estimated means data over the raw datasets as points with error bars connected
+    geom_line(data = summary_table_ground_day, aes(x = dayornight, y = emmean, group = 1),
+              linewidth = 1) +
+    geom_pointrange(data = summary_table_ground_day,
+                    aes(x = dayornight, y = emmean,
+                        ymin = lower.CL,
+                        ymax = upper.CL,
+                        color = dayornight),
+                    size = 1) +
+    scale_color_manual(values = c("night" = "black",
+                                "day" = "black")) +
+    facet_wrap(~ drt_treatment) +
+    labs(title = paste0("Estimated ", metric, " Temperature by Treatment Night vs Day"),
+         y = "Temperature (Celsius)",
+         color = "Day or Night") +
+    theme_modern()
+  
+  # Save the plot as an .jpeg file
+# CHANGE YOUR PATHWAY!!!
+  ggsave(file.path("D:/Cours/DURIN/Code/Durin_data/data/plots/Models/drought_net/day", paste0(metric, "_temperature_plot_summary.jpeg")), plot = p)
+  
+}
+####################################################
+#####################################################################################
+# Define temperature metrics to analyze
+metrics <- c("soil_temperature_mean", "soil_temperature_max",
+             "soil_temperature_min", "soil_temperature_range")
+
+
+# Initialize list to store results
+results_soil_day <- list()
+
+
+# Loop over temperature metrics
+for (metric in metrics) {
+  # Fit a linear mixed model to assess how the temperature metric varies depending on the interaction of fire_class and land types
+  model_soil_day <- lmer(as.formula(paste0(metric, " ~ drt_treatment * dayornight * fire_class+ (1 | daytime)")), data = micro_day)
+  
+  # Generate a summary table of estimated means accounting for the interaction term of fire_class and land type
+  summary_table_soil_day <- emmeans(model_soil_day, ~ drt_treatment + dayornight) %>%
+    as_tibble() %>%
+    select(drt_treatment, dayornight, emmean, SE, df, lower.CL, upper.CL)
+  
+  # Export summary table to Word document
+  doc <- read_docx()
+  doc <- body_add_table(doc, summary_table_soil_day)
+# CHANGE YOUR PATHWAY!!!
+  print(doc, file.path("D:/Cours/DURIN/Code/Durin_data/data/plots/Models/drought_net/day", target = paste0(metric, "DroughtNet_dayornight_summary_table.docx")))
+  
+# Paired comparisons with significance tests (doesn't yet print to word)
+  summary_paired_soil_day <- pairs(emmeans(model_soil_day, ~ drt_treatment*dayornight), simple = "each")
+# SUmmary anova for the model, i.e. is site, or land type or interaction significant over all. Then use the paired approach above to figure out differences.
+  summary_anova_soil_day <- anova(model_soil_day)
+
+  # Plot the estimated means for each fire_class and drought treatment combination
+  p <- ggplot(micro_day) +
+    geom_violin(aes(x = dayornight, y = !!sym(metric),
+                    fill = dayornight), alpha = 1) +
+    geom_jitter(aes(x = dayornight, y = !!sym(metric),
+                color = "black"), width = 0.1, alpha = 0.23) +
+    scale_fill_manual(values = c("night" = "blue4",
+                                "day" = "darkgoldenrod1")) +
+  # Add the estimated means data over the raw datasets as points with error bars connected
+    geom_line(data = summary_table_soil_day, aes(x = dayornight, y = emmean, group = 1),
+              linewidth = 1) +
+    geom_pointrange(data = summary_table_soil_day,
+                    aes(x = dayornight, y = emmean,
+                        ymin = lower.CL,
+                        ymax = upper.CL,
+                        color = dayornight),
+                    size = 1) +
+    scale_color_manual(values = c("night" = "black",
+                                "day" = "black")) +
+    facet_wrap(~ drt_treatment) +
+    labs(title = paste0("Estimated ", metric, " Temperature by Treatment Night vs Day"),
+         y = "Temperature (Celsius)",
+         color = "Day or Night") +
+    theme_modern()
+  
+  # Save the plot as an .jpeg file
+# CHANGE YOUR PATHWAY!!!
+  ggsave(file.path("D:/Cours/DURIN/Code/Durin_data/data/plots/Models/drought_net/day", paste0(metric, "_temperature_plot_summary.jpeg")), plot = p)
+  
+}
+####################################################
+#####################################################################################
+# Define temperature metrics to analyze
+metrics <- c("soil_moisture_mean", "soil_moisture_max",
+             "soil_moisture_min", "soil_moisture_range")
+
+
+# Initialize list to store results
+results_moist_day <- list()
+
+
+# Loop over temperature metrics
+for (metric in metrics) {
+  # Fit a linear mixed model to assess how the temperature metric varies depending on the interaction of fire_class and land types
+  model_moist_day <- lmer(as.formula(paste0(metric, " ~ drt_treatment * dayornight * fire_class + (1 | loggerID)")), data = micro_day)
+  
+  # Generate a summary table of estimated means accounting for the interaction term of fire_class and land type
+  summary_table_moist_day <- emmeans(model_moist_day, ~ drt_treatment + dayornight) %>%
+    as_tibble() %>%
+    select(drt_treatment, dayornight, emmean, SE, df, lower.CL, upper.CL)
+  
+  # Export summary table to Word document
+  doc <- read_docx()
+  doc <- body_add_table(doc, summary_table_moist_day)
+# CHANGE YOUR PATHWAY!!!
+  print(doc, file.path("D:/Cours/DURIN/Code/Durin_data/data/plots/Models/drought_net/day", target = paste0(metric, "DroughtNet_dayornight_summary_table.docx")))
+  
+# Paired comparisons with significance tests (doesn't yet print to word)
+  summary_paired_moist_day <- pairs(emmeans(model_moist_day, ~ drt_treatment*dayornight), simple = "each")
+# SUmmary anova for the model, i.e. is site, or land type or interaction significant over all. Then use the paired approach above to figure out differences.
+  summary_anova_moist_day <- anova(model_moist_day)
+
+  # Plot the estimated means for each fire_class and drought treatment combination
+  p <- ggplot(micro_day) +
+    geom_violin(aes(x = dayornight, y = !!sym(metric),
+                    fill = dayornight), alpha = 1) +
+    geom_jitter(aes(x = dayornight, y = !!sym(metric),
+                color = "black"), width = 0.1, alpha = 0.23) +
+    scale_fill_manual(values = c("night" = "blue4",
+                                "day" = "darkgoldenrod1")) +
+  # Add the estimated means data over the raw datasets as points with error bars connected
+    geom_line(data = summary_table_moist_day, aes(x = dayornight, y = emmean, group = 1),
+              linewidth = 1) +
+    geom_pointrange(data = summary_table_moist_day,
+                    aes(x = dayornight, y = emmean,
+                        ymin = lower.CL,
+                        ymax = upper.CL,
+                        color = dayornight),
+                    size = 1) +
+    scale_color_manual(values = c("night" = "black",
+                                "day" = "black")) +
+    facet_wrap(~ drt_treatment) +
+    labs(title = paste0("Estimated ", metric, " Moisture by Treatment Night vs Day"),
+         y = "Soil Moisture",
+         color = "Day or Night") +
+    theme_modern()
+  
+  # Save the plot as an .jpeg file
+# CHANGE YOUR PATHWAY!!!
+  ggsave(file.path("D:/Cours/DURIN/Code/Durin_data/data/plots/Models/drought_net/day", paste0(metric, "_temperature_plot_summary.jpeg")), plot = p)
+  
+}
+####################################################
+
+
+
+```
+
+```{r anova model contorl shrub}
+#### fire_class + drought_net
+# Example of fixed effects comparisons, with same random effects structure
+##
+  dn_model_1_air <- lmer(air_temperature_mean ~ fire_class*species2 + (1|loggerID), data = micro_control)
+  
+  dn_model_1a_air <- lmer(air_temperature_mean ~ fire_class*species2 + (1|daytime), data = micro_control)
+  
+  dn_model_1b_air <- lmer(air_temperature_mean ~ fire_class*species2 + (1|plotID/loggerID), data = micro_control)
+  
+  dn_model_1c_air <- lmer(air_temperature_mean ~ fire_class*species2 + (1|species), data = micro_control)
+  
+  dn_model_1s_air <- lmer(air_temperature_mean ~ fire_class*species2 + (1|loggerID)+ (1|species), data = micro_control)
+  
+  dn_model_1as_air <- lmer(air_temperature_mean ~ fire_class*species2 + (1|daytime) + (1|species), data = micro_control)
+  
+  dn_model_1bs_air <- lmer(air_temperature_mean ~ fire_class*species2 + (1|plotID/loggerID) + (1|species), data = micro_control)
+    
+  anova(dn_model_1_air,dn_model_1a_air,dn_model_1b_air,dn_model_1c_air,dn_model_1as_air,dn_model_1bs_air,dn_model_1s_air)
+
+##
+  ##
+  dn_model_1_air <- lmer(air_temperature_max ~ fire_class*species2 + (1|loggerID), data = micro_control)
+  
+  dn_model_1a_air <- lmer(air_temperature_max ~ fire_class*species2 + (1|daytime), data = micro_control)
+  
+  dn_model_1b_air <- lmer(air_temperature_max ~ fire_class*species2 + (1|plotID/loggerID), data = micro_control)
+  
+  dn_model_1c_air <- lmer(air_temperature_max ~ fire_class*species2 + (1|species), data = micro_control)
+  
+  dn_model_1s_air <- lmer(air_temperature_max ~ fire_class*species2 + (1|loggerID)+ (1|species), data = micro_control)
+  
+  dn_model_1as_air <- lmer(air_temperature_max ~ fire_class*species2 + (1|daytime) + (1|species), data = micro_control)
+  
+  dn_model_1bs_air <- lmer(air_temperature_max ~ fire_class*species2 + (1|plotID/loggerID) + (1|species), data = micro_control)
+    
+  anova(dn_model_1_air,dn_model_1a_air,dn_model_1b_air,dn_model_1c_air,dn_model_1as_air,dn_model_1bs_air,dn_model_1s_air)
+
+##
+  dn_model_1_air <- lmer(air_temperature_min ~ fire_class*species2 + (1|loggerID), data = micro_control)
+  
+  dn_model_1a_air <- lmer(air_temperature_min ~ fire_class*species2 + (1|daytime), data = micro_control)
+  
+  dn_model_1b_air <- lmer(air_temperature_min ~ fire_class*species2 + (1|plotID/loggerID), data = micro_control)
+  
+  dn_model_1c_air <- lmer(air_temperature_min ~ fire_class*species2 + (1|species), data = micro_control)
+  
+  dn_model_1s_air <- lmer(air_temperature_min ~ fire_class*species2 + (1|loggerID)+ (1|species), data = micro_control)
+  
+  dn_model_1as_air <- lmer(air_temperature_min ~ fire_class*species2 + (1|daytime) + (1|species), data = micro_control)
+  
+  dn_model_1bs_air <- lmer(air_temperature_min ~ fire_class*species2 + (1|plotID/loggerID) + (1|species), data = micro_control)
+    
+  anova(dn_model_1_air,dn_model_1a_air,dn_model_1b_air,dn_model_1c_air,dn_model_1as_air,dn_model_1bs_air,dn_model_1s_air)
+
+
+##
+dn_model_1_air <- lmer(air_temperature_range ~ fire_class*species2 + (1|loggerID), data = micro_control)
+  
+  dn_model_1a_air <- lmer(air_temperature_range ~ fire_class*species2 + (1|daytime), data = micro_control)
+  
+  dn_model_1b_air <- lmer(air_temperature_range ~ fire_class*species2 + (1|plotID/loggerID), data = micro_control)
+  
+  dn_model_1c_air <- lmer(air_temperature_range ~ fire_class*species2 + (1|species), data = micro_control)
+  
+  dn_model_1s_air <- lmer(air_temperature_range ~ fire_class*species2 + (1|loggerID)+ (1|species), data = micro_control)
+  
+  dn_model_1as_air <- lmer(air_temperature_range ~ fire_class*species2 + (1|daytime) + (1|species), data = micro_control)
+  
+  dn_model_1bs_air <- lmer(air_temperature_range ~ fire_class*species2 + (1|plotID/loggerID) + (1|species), data = micro_control)
+    
+  anova(dn_model_1_air,dn_model_1a_air,dn_model_1b_air,dn_model_1c_air,dn_model_1as_air,dn_model_1bs_air,dn_model_1s_air)
+  
+  
+metrics <- c("ground_temperature_mean", "ground_temperature_max",
+             "ground_temperature_min", "ground_temperature_range")
+
+########
+dn_model_1_ground <- lmer(ground_temperature_mean ~ fire_class*species2 + (1|loggerID), data = micro_control)
+
+dn_model_1a_ground <- lmer(ground_temperature_mean ~ fire_class*species2 + (1|daytime), data = micro_control)
+
+
+dn_model_1b_ground <- lmer(ground_temperature_mean ~ fire_class*species2 + (1|plotID/loggerID), data = micro_control)
+
+
+dn_model_1c_ground <- lmer(ground_temperature_mean ~ fire_class*species2 + (1|species), data = micro_control)
+
+dn_model_1s_ground <- lmer(ground_temperature_mean ~ fire_class*species2 + (1|loggerID)+ (1|species), data = micro_control)
+
+
+dn_model_1as_ground <- lmer(ground_temperature_mean ~ fire_class*species2 + (1|daytime) + (1|species), data = micro_control)
+
+
+dn_model_1bs_ground <- lmer(ground_temperature_mean ~ fire_class*species2 + (1|plotID/loggerID) + (1|species), data = micro_control)
+                              
+anova(dn_model_1_ground,dn_model_1s_ground,dn_model_1a_ground,dn_model_1as_ground,dn_model_1b_ground,dn_model_1bs_ground,dn_model_1c_ground)
+
+##
+########
+dn_model_1_ground <- lmer(ground_temperature_max ~ fire_class*species2 + (1|loggerID), data = micro_control)
+
+dn_model_1a_ground <- lmer(ground_temperature_max ~ fire_class*species2 + (1|daytime), data = micro_control)
+
+
+dn_model_1b_ground <- lmer(ground_temperature_max ~ fire_class*species2 + (1|plotID/loggerID), data = micro_control)
+
+
+dn_model_1c_ground <- lmer(ground_temperature_max ~ fire_class*species2 + (1|species), data = micro_control)
+
+dn_model_1s_ground <- lmer(ground_temperature_max ~ fire_class*species2 + (1|loggerID)+ (1|species), data = micro_control)
+
+
+dn_model_1as_ground <- lmer(ground_temperature_max ~ fire_class*species2 + (1|daytime) + (1|species), data = micro_control)
+
+
+dn_model_1bs_ground <- lmer(ground_temperature_max ~ fire_class*species2 + (1|plotID/loggerID) + (1|species), data = micro_control)
+                              
+anova(dn_model_1_ground,dn_model_1s_ground,dn_model_1a_ground,dn_model_1as_ground,dn_model_1b_ground,dn_model_1bs_ground,dn_model_1c_ground)
+
+##
+########
+dn_model_1_ground <- lmer(ground_temperature_min ~ fire_class*species2 + (1|loggerID), data = micro_control)
+
+dn_model_1a_ground <- lmer(ground_temperature_min ~ fire_class*species2 + (1|daytime), data = micro_control)
+
+
+dn_model_1b_ground <- lmer(ground_temperature_min ~ fire_class*species2 + (1|plotID/loggerID), data = micro_control)
+
+
+dn_model_1c_ground <- lmer(ground_temperature_min ~ fire_class*species2 + (1|species), data = micro_control)
+
+dn_model_1s_ground <- lmer(ground_temperature_min ~ fire_class*species2 + (1|loggerID)+ (1|species), data = micro_control)
+
+
+dn_model_1as_ground <- lmer(ground_temperature_min ~ fire_class*species2 + (1|daytime) + (1|species), data = micro_control)
+
+
+dn_model_1bs_ground <- lmer(ground_temperature_min ~ fire_class*species2 + (1|plotID/loggerID) + (1|species), data = micro_control)
+                              
+anova(dn_model_1_ground,dn_model_1s_ground,dn_model_1a_ground,dn_model_1as_ground,dn_model_1b_ground,dn_model_1bs_ground,dn_model_1c_ground)
+
+##
+########
+dn_model_1_ground <- lmer(ground_temperature_range ~ fire_class*species2 + (1|loggerID), data = micro_control)
+
+dn_model_1a_ground <- lmer(ground_temperature_range ~ fire_class*species2 + (1|daytime), data = micro_control)
+
+
+dn_model_1b_ground <- lmer(ground_temperature_range ~ fire_class*species2 + (1|plotID/loggerID), data = micro_control)
+
+
+dn_model_1c_ground <- lmer(ground_temperature_range ~ fire_class*species2 + (1|species), data = micro_control)
+
+dn_model_1s_ground <- lmer(ground_temperature_range ~ fire_class*species2 + (1|loggerID)+ (1|species), data = micro_control)
+
+
+dn_model_1as_ground <- lmer(ground_temperature_range ~ fire_class*species2 + (1|daytime) + (1|species), data = micro_control)
+
+
+dn_model_1bs_ground <- lmer(ground_temperature_range ~ fire_class*species2 + (1|plotID/loggerID) + (1|species), data = micro_control)
+                              
+anova(dn_model_1_ground,dn_model_1s_ground,dn_model_1a_ground,dn_model_1as_ground,dn_model_1b_ground,dn_model_1bs_ground,dn_model_1c_ground)
+
+##
+
+
+
+
+
+
+###
+
+metrics <- c("soil_temperature_mean", "soil_temperature_max",
+             "soil_temperature_min", "soil_temperature_range")
+
+
+
+##  
+dn_model_1_soil <- lmer(soil_temperature_mean ~ fire_class*species2 + (1|loggerID), data = micro_control)
+
+dn_model_1a_soil <- lmer(soil_temperature_mean ~ fire_class*species2 + (1|daytime), data = micro_control)
+
+
+dn_model_1b_soil <- lmer(soil_temperature_mean ~ fire_class*species2 + (1|plotID/loggerID), data = micro_control)
+
+
+dn_model_1c_soil <- lmer(soil_temperature_mean ~ fire_class*species2 + (1|species), data = micro_control)
+
+dn_model_1s_soil <- lmer(soil_temperature_mean ~ fire_class*species2 + (1|loggerID)+ (1|species), data = micro_control)
+
+
+dn_model_1as_soil <- lmer(soil_temperature_mean ~ fire_class*species2 + (1|daytime) + (1|species), data = micro_control)
+
+
+dn_model_1bs_soil <- lmer(soil_temperature_mean ~ fire_class*species2 + (1|plotID/loggerID) + (1|species), data = micro_control)
+                              
+anova(dn_model_1_soil,dn_model_1s_soil,dn_model_1a_soil,dn_model_1as_soil,dn_model_1b_soil,dn_model_1bs_soil,dn_model_1c_soil)
+
+##
+##  
+dn_model_1_soil <- lmer(soil_temperature_max ~ fire_class*species2 + (1|loggerID), data = micro_control)
+
+dn_model_1a_soil <- lmer(soil_temperature_max ~ fire_class*species2 + (1|daytime), data = micro_control)
+
+
+dn_model_1b_soil <- lmer(soil_temperature_max ~ fire_class*species2 + (1|plotID/loggerID), data = micro_control)
+
+
+dn_model_1c_soil <- lmer(soil_temperature_max ~ fire_class*species2 + (1|species), data = micro_control)
+
+dn_model_1s_soil <- lmer(soil_temperature_max ~ fire_class*species2 + (1|loggerID)+ (1|species), data = micro_control)
+
+
+dn_model_1as_soil <- lmer(soil_temperature_max ~ fire_class*species2 + (1|daytime) + (1|species), data = micro_control)
+
+
+dn_model_1bs_soil <- lmer(soil_temperature_max ~ fire_class*species2 + (1|plotID/loggerID) + (1|species), data = micro_control)
+                              
+anova(dn_model_1_soil,dn_model_1s_soil,dn_model_1a_soil,dn_model_1as_soil,dn_model_1b_soil,dn_model_1bs_soil,dn_model_1c_soil)
+
+##
+##  
+dn_model_1_soil <- lmer(soil_temperature_min ~ fire_class*species2 + (1|loggerID), data = micro_control)
+
+dn_model_1a_soil <- lmer(soil_temperature_min ~ fire_class*species2 + (1|daytime), data = micro_control)
+
+
+dn_model_1b_soil <- lmer(soil_temperature_min ~ fire_class*species2 + (1|plotID/loggerID), data = micro_control)
+
+
+dn_model_1c_soil <- lmer(soil_temperature_min ~ fire_class*species2 + (1|species), data = micro_control)
+
+dn_model_1s_soil <- lmer(soil_temperature_min ~ fire_class*species2 + (1|loggerID)+ (1|species), data = micro_control)
+
+
+dn_model_1as_soil <- lmer(soil_temperature_min ~ fire_class*species2 + (1|daytime) + (1|species), data = micro_control)
+
+
+dn_model_1bs_soil <- lmer(soil_temperature_min ~ fire_class*species2 + (1|plotID/loggerID) + (1|species), data = micro_control)
+                              
+anova(dn_model_1_soil,dn_model_1s_soil,dn_model_1a_soil,dn_model_1as_soil,dn_model_1b_soil,dn_model_1bs_soil,dn_model_1c_soil)
+
+##
+##  
+dn_model_1_soil <- lmer(soil_temperature_range ~ fire_class*species2 + (1|loggerID), data = micro_control)
+
+dn_model_1a_soil <- lmer(soil_temperature_range ~ fire_class*species2 + (1|daytime), data = micro_control)
+
+
+dn_model_1b_soil <- lmer(soil_temperature_range ~ fire_class*species2 + (1|plotID/loggerID), data = micro_control)
+
+
+dn_model_1c_soil <- lmer(soil_temperature_range ~ fire_class*species2 + (1|species), data = micro_control)
+
+dn_model_1s_soil <- lmer(soil_temperature_range ~ fire_class*species2 + (1|loggerID)+ (1|species), data = micro_control)
+
+
+dn_model_1as_soil <- lmer(soil_temperature_range ~ fire_class*species2 + (1|daytime) + (1|species), data = micro_control)
+
+
+dn_model_1bs_soil <- lmer(soil_temperature_range ~ fire_class*species2 + (1|plotID/loggerID) + (1|species), data = micro_control)
+                              
+anova(dn_model_1_soil,dn_model_1s_soil,dn_model_1a_soil,dn_model_1as_soil,dn_model_1b_soil,dn_model_1bs_soil,dn_model_1c_soil)
+
+##
+
+
+
+
+#############################################################################################
+
+metrics <- c("soil_moisture_mean", "soil_moisture_max",
+             "soil_moisture_min", "soil_moisture_range")
+
+
+###  
+dn_model_1_moist <- lmer(soil_moisture_mean ~ fire_class*species2 + (1|loggerID), data = micro_control)
+
+dn_model_1a_moist <- lmer(soil_moisture_mean ~ fire_class*species2 + (1|daytime), data = micro_control)
+
+
+dn_model_1b_moist <- lmer(soil_moisture_mean ~ fire_class*species2 + (1|plotID/loggerID), data = micro_control)
+
+
+dn_model_1c_moist <- lmer(soil_moisture_mean ~ fire_class*species2 + (1|species), data = micro_control)
+
+dn_model_1s_moist <- lmer(soil_moisture_mean ~ fire_class*species2 + (1|loggerID)+ (1|species), data = micro_control)
+
+
+dn_model_1as_moist <- lmer(soil_moisture_mean ~ fire_class*species2 + (1|daytime) + (1|species), data = micro_control)
+
+
+dn_model_1bs_moist <- lmer(soil_moisture_mean ~ fire_class*species2 + (1|plotID/loggerID) + (1|species), data = micro_control)
+                              
+anova(dn_model_1_moist,dn_model_1s_moist,dn_model_1a_moist,dn_model_1as_moist,dn_model_1b_moist,dn_model_1bs_moist,dn_model_1c_moist)
+###
+###  
+dn_model_1_moist <- lmer(soil_moisture_max ~ fire_class*species2 + (1|loggerID), data = micro_control)
+
+dn_model_1a_moist <- lmer(soil_moisture_max ~ fire_class*species2 + (1|daytime), data = micro_control)
+
+
+dn_model_1b_moist <- lmer(soil_moisture_max ~ fire_class*species2 + (1|plotID/loggerID), data = micro_control)
+
+
+dn_model_1c_moist <- lmer(soil_moisture_max ~ fire_class*species2 + (1|species), data = micro_control)
+
+dn_model_1s_moist <- lmer(soil_moisture_max ~ fire_class*species2 + (1|loggerID)+ (1|species), data = micro_control)
+
+
+dn_model_1as_moist <- lmer(soil_moisture_max ~ fire_class*species2 + (1|daytime) + (1|species), data = micro_control)
+
+
+dn_model_1bs_moist <- lmer(soil_moisture_max ~ fire_class*species2 + (1|plotID/loggerID) + (1|species), data =micro_control) 
+                              
+anova(dn_model_1_moist,dn_model_1s_moist,dn_model_1a_moist,dn_model_1as_moist,dn_model_1b_moist,dn_model_1bs_moist,dn_model_1c_moist)
+###
+###  
+dn_model_1_moist <- lmer(soil_moisture_min ~ fire_class*species2 + (1|loggerID), data = micro_control)
+
+dn_model_1a_moist <- lmer(soil_moisture_min ~ fire_class*species2 + (1|daytime), data = micro_control)
+
+
+dn_model_1b_moist <- lmer(soil_moisture_min ~ fire_class*species2 + (1|plotID/loggerID), data = micro_control)
+
+
+dn_model_1c_moist <- lmer(soil_moisture_min ~ fire_class*species2 + (1|species), data = micro_control)
+
+dn_model_1s_moist <- lmer(soil_moisture_min ~ fire_class*species2 + (1|loggerID)+ (1|species), data = micro_control)
+
+
+dn_model_1as_moist <- lmer(soil_moisture_min ~ fire_class*species2 + (1|daytime) + (1|species), data = micro_control)
+
+
+dn_model_1bs_moist <- lmer(soil_moisture_min ~ fire_class*species2 + (1|plotID/loggerID) + (1|species), data =micro_control) 
+                              
+anova(dn_model_1_moist,dn_model_1s_moist,dn_model_1a_moist,dn_model_1as_moist,dn_model_1b_moist,dn_model_1bs_moist,dn_model_1c_moist)
+###
+###  
+dn_model_1_moist <- lmer(soil_moisture_range ~ fire_class*species2 + (1|loggerID), data = micro_control)
+
+dn_model_1a_moist <- lmer(soil_moisture_range ~ fire_class*species2 + (1|daytime), data = micro_control)
+
+
+dn_model_1b_moist <- lmer(soil_moisture_range ~ fire_class*species2 + (1|plotID/loggerID), data = micro_control)
+
+
+dn_model_1c_moist <- lmer(soil_moisture_range ~ fire_class*species2 + (1|species), data = micro_control)
+
+dn_model_1s_moist <- lmer(soil_moisture_range ~ fire_class*species2 + (1|loggerID)+ (1|species), data = micro_control)
+
+
+dn_model_1as_moist <- lmer(soil_moisture_range ~ fire_class*species2 + (1|daytime) + (1|species), data = micro_control)
+
+
+dn_model_1bs_moist <- lmer(soil_moisture_range ~ fire_class*species2 + (1|plotID/loggerID) + (1|species), data = micro_control)
+                              
+anova(dn_model_1_moist,dn_model_1s_moist,dn_model_1a_moist,dn_model_1as_moist,dn_model_1b_moist,dn_model_1bs_moist,dn_model_1c_moist)
+###
+
 ```
 
